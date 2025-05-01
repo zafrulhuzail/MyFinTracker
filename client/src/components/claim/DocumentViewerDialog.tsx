@@ -45,17 +45,28 @@ export function DocumentViewerDialog({
     }
     // Handle file:// protocol (old format)
     else if (fileUrl.startsWith('file://')) {
-      normalizedUrl = `/uploads/${fileUrl.replace('file://', '')}`;
+      const filename = fileUrl.replace('file://', '');
+      normalizedUrl = `/uploads/${filename}`;
     } 
     // Handle raw filenames (most common case from claims)
     else if (!fileUrl.startsWith('/') && !fileUrl.startsWith('http')) {
-      // If it's a raw filename (like "Transcript-Stolen-Bike.pdf"),
+      // If it's a raw filename (like "Transcript-Stolen-Bike.pdf" or "Final Result.pdf"),
       // prefix it with the uploads path
       normalizedUrl = `/uploads/${fileUrl}`;
     }
     
+    // Logging for debugging
     console.log('Document viewer - Original URL:', fileUrl);
     console.log('Document viewer - Normalized URL:', normalizedUrl);
+    
+    // Encode spaces and special characters in the URL path
+    // Don't encode full URL since /uploads/ should remain as is
+    if (normalizedUrl.startsWith('/uploads/')) {
+      const pathParts = normalizedUrl.split('/uploads/');
+      const encodedFilename = encodeURIComponent(pathParts[1]);
+      normalizedUrl = `/uploads/${encodedFilename}`;
+      console.log('Document viewer - URL encoded:', normalizedUrl);
+    }
     
     setFinalUrl(normalizedUrl);
     
@@ -133,7 +144,10 @@ export function DocumentViewerDialog({
                     variant="default" 
                     className="w-full py-6"
                     onClick={() => {
-                      const newTab = window.open(finalUrl, '_blank');
+                      // Properly encode the URL to handle spaces and special characters
+                      const encodedUrl = encodeURI(finalUrl);
+                      console.log('Opening URL:', encodedUrl);
+                      const newTab = window.open(encodedUrl, '_blank');
                       if (!newTab) {
                         alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
                       }
@@ -146,7 +160,7 @@ export function DocumentViewerDialog({
                     </div>
                   </Button>
                   <a 
-                    href={finalUrl} 
+                    href={encodeURI(finalUrl)} 
                     download={fileName}
                     className="w-full"
                   >
@@ -177,7 +191,10 @@ export function DocumentViewerDialog({
                   variant="outline" 
                   className="w-full sm:w-auto"
                   onClick={() => {
-                    const newTab = window.open(finalUrl, '_blank');
+                    // Properly encode the URL to handle spaces and special characters
+                    const encodedUrl = encodeURI(finalUrl);
+                    console.log('Opening URL:', encodedUrl);
+                    const newTab = window.open(encodedUrl, '_blank');
                     if (!newTab) {
                       alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
                     }
@@ -187,7 +204,7 @@ export function DocumentViewerDialog({
                   Open in Browser
                 </Button>
                 <a 
-                  href={finalUrl} 
+                  href={encodeURI(finalUrl)} 
                   download={fileName}
                 >
                   <Button className="w-full sm:w-auto">
