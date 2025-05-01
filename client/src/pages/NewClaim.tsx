@@ -5,8 +5,6 @@ import ClaimForm from "@/components/claim/ClaimForm";
 export default function NewClaim() {
   return (
     <div className="flex flex-col min-h-screen">
-      <AppHeader title="New Claim" />
-      
       <div className="flex-1">
         <div className="px-4 py-6 container mx-auto max-w-4xl">
           <div className="mb-4">
