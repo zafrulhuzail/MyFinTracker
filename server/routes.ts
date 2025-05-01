@@ -117,6 +117,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get all users (admin only)
+  apiRouter.get("/users", authenticateUser, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      
+      // Filter out passwords from all users
+      const usersWithoutPasswords = allUsers.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      
+      return res.status(200).json(usersWithoutPasswords);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+
   apiRouter.put("/users/:id", authenticateUser, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.id);

@@ -24,13 +24,37 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { 
+  BadgeInfo, 
+  Mail, 
+  Phone, 
+  School, 
+  BookOpen, 
+  MapPin, 
+  Flag, 
+  GraduationCap, 
+  Users 
+} from "lucide-react";
+import { 
+  Avatar, 
+  AvatarFallback, 
+  AvatarImage 
+} from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Fetch all claims
   const { data: claims, isLoading: isLoadingClaims } = useQuery<Claim[]>({
     queryKey: ["/api/claims"],
+  });
+  
+  // Fetch all users (students)
+  const { data: users, isLoading: isLoadingUsers } = useQuery<User[]>({
+    queryKey: ["/api/users"],
   });
   
   // Stats calculation
@@ -38,6 +62,28 @@ export default function AdminDashboard() {
   const approvedClaims = claims?.filter(claim => claim.status === "approved").length || 0;
   const rejectedClaims = claims?.filter(claim => claim.status === "rejected").length || 0;
   const totalClaims = claims?.length || 0;
+  
+  // Student statistics
+  const totalStudents = users?.filter(user => user.role !== "admin").length || 0;
+  
+  // Group students by country
+  const studentsByCountry: Record<string, number> = {};
+  users?.forEach(user => {
+    if (user.role !== "admin") {
+      const country = user.countryOfStudy;
+      studentsByCountry[country] = (studentsByCountry[country] || 0) + 1;
+    }
+  });
+  
+  // Get top 3 countries
+  const topCountries = Object.entries(studentsByCountry)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  
+  // Get total different universities
+  const totalUniversities = new Set(
+    users?.filter(user => user.role !== "admin").map(user => user.university)
+  ).size;
   
   // Total amount statistics
   const totalPendingAmount = claims
@@ -97,8 +143,9 @@ export default function AdminDashboard() {
           </div>
           
           <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="students">Students</TabsTrigger>
               <TabsTrigger value="claims">Claims</TabsTrigger>
             </TabsList>
             
@@ -219,6 +266,107 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="students" className="mt-4">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Student Directory</h3>
+                  <div className="relative w-64">
+                    <Input
+                      type="text"
+                      placeholder="Search students..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                    <Users size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  </div>
+                </div>
+                
+                {isLoadingUsers ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                      <Skeleton key={i} className="h-64 w-full" />
+                    ))}
+                  </div>
+                ) : users?.filter(user => 
+                  user.role !== "admin" && 
+                  (searchQuery === "" || 
+                    user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.maraId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.university.toLowerCase().includes(searchQuery.toLowerCase()))
+                ).length ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {users
+                      .filter(user => 
+                        user.role !== "admin" && 
+                        (searchQuery === "" || 
+                          user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          user.maraId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          user.university.toLowerCase().includes(searchQuery.toLowerCase()))
+                      )
+                      .map(student => (
+                        <Card key={student.id} className="overflow-hidden">
+                          <div className="bg-gradient-to-r from-blue-500 to-primary h-12"></div>
+                          <div className="p-4 pt-0 -mt-6">
+                            <div className="flex gap-4">
+                              <Avatar className="h-16 w-16 border-4 border-white">
+                                <AvatarFallback className="text-xl bg-primary text-white">
+                                  {student.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 mt-2">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="font-bold text-lg">{student.fullName}</h4>
+                                    <p className="text-sm text-gray-600">MARA ID: {student.maraId}</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs border-primary text-primary">
+                                    {student.degreeLevel}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 gap-3 mt-4">
+                              <div className="flex items-center gap-2 text-sm">
+                                <School size={16} className="text-gray-400" />
+                                <span className="font-medium">{student.university}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <BookOpen size={16} className="text-gray-400" />
+                                <span>{student.fieldOfStudy}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Mail size={16} className="text-gray-400" />
+                                <span>{student.email}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Flag size={16} className="text-gray-400" />
+                                <span>{student.countryOfStudy}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <BadgeInfo size={16} className="text-gray-400" />
+                                <span>MARA Group: {student.maraGroup}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-gray-500 border rounded-md bg-gray-50">
+                    <Users size={48} className="mx-auto mb-4 text-gray-300" />
+                    <h3 className="text-lg font-medium mb-1">No Students Found</h3>
+                    <p>
+                      {searchQuery 
+                        ? `No students matching "${searchQuery}"`
+                        : "There are no students registered in the system yet."}
+                    </p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             
