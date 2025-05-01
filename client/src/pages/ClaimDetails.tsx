@@ -8,12 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 
 import AppHeader from "@/components/layout/AppHeader";
 import ClaimReviewForm from "@/components/admin/ClaimReviewForm";
+import { DocumentViewerDialog } from "@/components/claim/DocumentViewerDialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, FileText, DownloadCloud } from "lucide-react";
+import { AlertCircle, FileText, DownloadCloud, Eye } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
@@ -29,6 +30,7 @@ export default function ClaimDetails() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<{ url: string; name: string; title: string } | null>(null);
   
   // Fetch claim details
   const { data: claim, isLoading } = useQuery<Claim>({
@@ -186,10 +188,32 @@ export default function ClaimDetails() {
                       {claim.receiptFile.split('/').pop()}
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="flex items-center gap-1">
-                    <DownloadCloud className="h-4 w-4" />
-                    <span className="hidden sm:inline">Download</span>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex items-center gap-1"
+                      onClick={() => setViewingDocument({
+                        url: claim.receiptFile,
+                        name: claim.receiptFile.split('/').pop() || 'Receipt',
+                        title: 'Receipt/Proof of Payment'
+                      })}
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span className="hidden sm:inline">View</span>
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex items-center gap-1"
+                      asChild
+                    >
+                      <a href={claim.receiptFile} download target="_blank" rel="noopener noreferrer">
+                        <DownloadCloud className="h-4 w-4" />
+                        <span className="hidden sm:inline">Download</span>
+                      </a>
+                    </Button>
+                  </div>
                 </div>
                 
                 {claim.supportingDocFile && (
@@ -201,10 +225,32 @@ export default function ClaimDetails() {
                         {claim.supportingDocFile.split('/').pop()}
                       </p>
                     </div>
-                    <Button size="sm" variant="outline" className="flex items-center gap-1">
-                      <DownloadCloud className="h-4 w-4" />
-                      <span className="hidden sm:inline">Download</span>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex items-center gap-1"
+                        onClick={() => claim.supportingDocFile && setViewingDocument({
+                          url: claim.supportingDocFile,
+                          name: claim.supportingDocFile.split('/').pop() || 'Supporting Document',
+                          title: 'Supporting Document'
+                        })}
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span className="hidden sm:inline">View</span>
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex items-center gap-1"
+                        asChild
+                      >
+                        <a href={claim.supportingDocFile} download target="_blank" rel="noopener noreferrer">
+                          <DownloadCloud className="h-4 w-4" />
+                          <span className="hidden sm:inline">Download</span>
+                        </a>
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -295,6 +341,17 @@ export default function ClaimDetails() {
           </div>
         </div>
       </div>
+
+      {/* Document Viewer Dialog */}
+      {viewingDocument && (
+        <DocumentViewerDialog
+          isOpen={!!viewingDocument}
+          onClose={() => setViewingDocument(null)}
+          fileUrl={viewingDocument.url}
+          fileName={viewingDocument.name}
+          title={viewingDocument.title}
+        />
+      )}
     </div>
   );
 }
