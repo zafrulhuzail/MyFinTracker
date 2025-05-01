@@ -1,0 +1,372 @@
+import express, { type Express, Request, Response, NextFunction } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { 
+  loginSchema, 
+  insertUserSchema, 
+  insertClaimSchema,
+
+  insertAcademicRecordSchema,
+  insertCourseSchema,
+  insertStudyPlanSchema,
+  updateClaimStatusSchema
+} from "@shared/schema";
+import { sendEmail } from "./utils/email";
+import { authenticateUser, isAdmin } from "./middleware/auth";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // API routes
+  const apiRouter = express.Router();
+  
+  // Auth routes
+  apiRouter.post("/auth/login", async (req: Request, res: Response) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      const user = await storage.getUserByUsername(validatedData.username);
+      
+      if (!user || user.password !== validatedData.password) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      // Set user session
+      req.session.userId = user.id;
+      req.session.userRole = user.role;
+      
+      const { password, ...userWithoutPassword } = user;
+      return res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  apiRouter.post("/auth/logout", (req: Request, res: Response) => {
+    req.session.destroy(() => {
+      res.status(200).json({ message: "Logged out successfully" });
+    });
+  });
+  
+  apiRouter.get("/auth/me", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId!);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const { password, ...userWithoutPassword } = user;
+      return res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  // User routes
+  apiRouter.post("/users", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      
+      // Check if username already exists
+      const existingUserByUsername = await storage.getUserByUsername(validatedData.username);
+      if (existingUserByUsername) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      // Check if email already exists
+      const existingUserByEmail = await storage.getUserByEmail(validatedData.email);
+      if (existingUserByEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      
+      // Check if MARA ID already exists
+      const existingUserByMaraId = await storage.getUserByMaraId(validatedData.maraId);
+      if (existingUserByMaraId) {
+        return res.status(400).json({ message: "MARA ID already exists" });
+      }
+      
+      const newUser = await storage.createUser(validatedData);
+      const { password, ...userWithoutPassword } = newUser;
+      
+      // Send welcome email
+      await sendEmail(
+        newUser.email,
+        "Welcome to MARA Claim System",
+        `Dear ${newUser.fullName},\n\nYour account has been created successfully. You can now log in to the MARA Claim System with your username and password.\n\nBest regards,\nMARA Admin Team`
+      );
+      
+      return res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  apiRouter.put("/users/:id", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Users can only update their own profile unless they're an admin
+      if (req.session.userId !== userId && req.session.userRole !== "admin") {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const updatedUser = await storage.updateUser(userId, req.body);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const { password, ...userWithoutPassword } = updatedUser;
+      return res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  // Claim routes
+  apiRouter.post("/claims", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const validatedData = insertClaimSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const newClaim = await storage.createClaim(validatedData);
+      
+      // Get admin users to notify
+      const adminUsers = Array.from((await storage.getAllClaims()).values())
+        .filter((user) => user.role === "admin");
+      
+      // Create notification for admins
+      for (const admin of adminUsers) {
+        await storage.createNotification({
+          userId: admin.id,
+          title: "New Claim Submitted",
+          message: `A new claim has been submitted by a student. Claim ID: ${newClaim.id}`
+        });
+      }
+      
+      // Notify the user that their claim has been submitted
+      await storage.createNotification({
+        userId,
+        title: "Claim Submitted",
+        message: `Your claim for ${validatedData.claimType} has been submitted and is pending review.`
+      });
+      
+      return res.status(201).json(newClaim);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  apiRouter.get("/claims", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const userRole = req.session.userRole!;
+      
+      // Admin can see all claims, students can only see their own
+      let claims;
+      if (userRole === "admin") {
+        claims = await storage.getAllClaims();
+      } else {
+        claims = await storage.getClaimsByUser(userId);
+      }
+      
+      return res.status(200).json(claims);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  apiRouter.get("/claims/:id", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const claimId = parseInt(req.params.id);
+      const claim = await storage.getClaim(claimId);
+      
+      if (!claim) {
+        return res.status(404).json({ message: "Claim not found" });
+      }
+      
+      // Students can only view their own claims
+      if (req.session.userRole !== "admin" && claim.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      return res.status(200).json(claim);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  apiRouter.put("/claims/:id/status", authenticateUser, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const claimId = parseInt(req.params.id);
+      const adminId = req.session.userId!;
+      
+      const validatedData = updateClaimStatusSchema.parse(req.body);
+      
+      const claim = await storage.getClaim(claimId);
+      if (!claim) {
+        return res.status(404).json({ message: "Claim not found" });
+      }
+      
+      const updatedClaim = await storage.updateClaimStatus(claimId, validatedData, adminId);
+      
+      if (!updatedClaim) {
+        return res.status(500).json({ message: "Failed to update claim status" });
+      }
+      
+      // Get the student who submitted the claim
+      const student = await storage.getUser(claim.userId);
+      
+      if (student) {
+        // Notify the student about the claim status update
+        await storage.createNotification({
+          userId: student.id,
+          title: `Claim ${validatedData.status.charAt(0).toUpperCase() + validatedData.status.slice(1)}`,
+          message: `Your claim for ${claim.claimType} has been ${validatedData.status}.`
+        });
+        
+        // Send email notification
+        await sendEmail(
+          student.email,
+          `MARA Claim ${validatedData.status.charAt(0).toUpperCase() + validatedData.status.slice(1)}`,
+          `Dear ${student.fullName},\n\nYour claim for ${claim.claimType} (€${claim.amount}) has been ${validatedData.status}.${validatedData.reviewComment ? `\n\nReviewer comments: ${validatedData.reviewComment}` : ""}\n\nBest regards,\nMARA Admin Team`
+        );
+      }
+      
+      return res.status(200).json(updatedClaim);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  // Academic record routes
+  apiRouter.post("/academic-records", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const validatedData = insertAcademicRecordSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const newAcademicRecord = await storage.createAcademicRecord(validatedData);
+      return res.status(201).json(newAcademicRecord);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  apiRouter.get("/academic-records", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const academicRecords = await storage.getAcademicRecordsByUser(userId);
+      return res.status(200).json(academicRecords);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  // Course routes
+  apiRouter.post("/courses", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertCourseSchema.parse(req.body);
+      
+      // Ensure the academic record belongs to the user
+      const academicRecord = await storage.getAcademicRecord(validatedData.academicRecordId);
+      
+      if (!academicRecord || academicRecord.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const newCourse = await storage.createCourse(validatedData);
+      return res.status(201).json(newCourse);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  apiRouter.get("/academic-records/:id/courses", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const academicRecordId = parseInt(req.params.id);
+      
+      // Ensure the academic record belongs to the user
+      const academicRecord = await storage.getAcademicRecord(academicRecordId);
+      
+      if (!academicRecord || (academicRecord.userId !== req.session.userId && req.session.userRole !== "admin")) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const courses = await storage.getCoursesByAcademicRecord(academicRecordId);
+      return res.status(200).json(courses);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  // Study plan routes
+  apiRouter.post("/study-plans", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const validatedData = insertStudyPlanSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const newStudyPlan = await storage.createStudyPlan(validatedData);
+      return res.status(201).json(newStudyPlan);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid request", error });
+    }
+  });
+  
+  apiRouter.get("/study-plans", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const studyPlans = await storage.getStudyPlansByUser(userId);
+      return res.status(200).json(studyPlans);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  // Notification routes
+  apiRouter.get("/notifications", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const notifications = await storage.getNotificationsByUser(userId);
+      return res.status(200).json(notifications);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  apiRouter.put("/notifications/:id/read", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      
+      // Ensure the notification belongs to the user
+      const notification = await storage.getNotification(notificationId);
+      
+      if (!notification || notification.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const updatedNotification = await storage.markNotificationAsRead(notificationId);
+      
+      if (!updatedNotification) {
+        return res.status(500).json({ message: "Failed to mark notification as read" });
+      }
+      
+      return res.status(200).json(updatedNotification);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  // Mount API routes
+  app.use("/api", apiRouter);
+  
+  const httpServer = createServer(app);
+  return httpServer;
+}

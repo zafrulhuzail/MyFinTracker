@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Base colors */
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  
+  /* MARA theme colors based on the design */
+  --primary: 174 100% 29%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 200 13% 46%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 43 100% 50%;
+  --accent-foreground: 20 14.3% 4.1%;
+  
+  /* Status colors */
+  --success: 122 39% 49%;
+  --success-foreground: 0 0% 100%;
+  --error: 0 84% 60%;
+  --error-foreground: 0 0% 98%;
+  --warning: 36 100% 50%;
+  --warning-foreground: 0 0% 98%;
+  --info: 210 79% 46%;
+  --info-foreground: 0 0% 100%;
+  
+  /* Misc */
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  
+  /* MARA theme colors for dark mode */
+  --primary: 174 100% 29%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 200 13% 46%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 43 100% 50%;
+  --accent-foreground: 0 0% 0%;
+  
+  /* Status colors for dark mode */
+  --success: 122 39% 44%;
+  --success-foreground: 0 0% 100%;
+  --error: 0 62.8% 30.6%;
+  --error-foreground: 0 0% 98%;
+  --warning: 36 100% 45%;
+  --warning-foreground: 0 0% 98%;
+  --info: 210 79% 40%;
+  --info-foreground: 0 0% 100%;
+  
+  --ring: 240 4.9% 83.9%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom utility classes */
+.bottom-nav-item.active {
+  @apply text-primary;
+}
+
+.animated-tab {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Material Icons */
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
