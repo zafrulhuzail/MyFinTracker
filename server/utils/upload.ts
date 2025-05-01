@@ -6,6 +6,9 @@ import fs from 'fs';
 const uploadDir = path.join(process.cwd(), 'public/uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log(`Created upload directory at: ${uploadDir}`);
+} else {
+  console.log(`Upload directory exists at: ${uploadDir}`);
 }
 
 // Configure multer storage

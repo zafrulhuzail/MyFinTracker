@@ -419,14 +419,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         path: req.file.path
       });
       
-      // Return the file URL that can be used to access the file
+      // Create the absolute file URL that can be used to access the file
       const fileUrl = getFileUrl(req.file.filename);
       
+      // Get server base URL
+      const protocol = req.protocol;
+      const host = req.get('host');
+      
+      console.log(`File saved at: ${req.file.path}`);
+      console.log(`File URL: ${fileUrl}`);
+      console.log(`Server base URL: ${protocol}://${host}`);
+      
+      // Return file information
       return res.status(201).json({
         fileName: req.file.originalname,
-        fileUrl: fileUrl,
+        fileUrl: fileUrl, // Relative URL (/uploads/filename)
         fileSize: req.file.size,
-        mimeType: req.file.mimetype
+        mimeType: req.file.mimetype,
+        path: req.file.path
       });
     } catch (error) {
       console.error("File upload error:", error);

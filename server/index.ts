@@ -11,7 +11,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Serve static files from /public/uploads directory
-app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+const uploadsPath = path.join(process.cwd(), 'public/uploads');
+console.log(`Setting up static file serving from: ${uploadsPath}`);
+app.use('/uploads', express.static(uploadsPath, {
+  // Increase caching to improve performance
+  maxAge: '1h',
+  // Set proper content types for common file types
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+    } else if (filePath.match(/\.(jpe?g)$/i)) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (filePath.match(/\.(png)$/i)) {
+      res.setHeader('Content-Type', 'image/png');
+    }
+    // Enable CORS for file access
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
 
 // Set up session middleware with PostgreSQL storage
 const PgSession = connectPgSimple(session);
