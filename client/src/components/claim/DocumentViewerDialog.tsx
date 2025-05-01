@@ -30,10 +30,24 @@ export function DocumentViewerDialog({
   const [isImage, setIsImage] = useState(false);
   
   useEffect(() => {
-    // Normalize file URL
-    const normalizedUrl = fileUrl.startsWith('file://') 
-      ? `/uploads/${fileUrl.replace('file://', '')}` 
-      : fileUrl;
+    // Normalize file URL based on different possible formats
+    let normalizedUrl = fileUrl;
+    
+    // Handle file:// protocol (old format)
+    if (fileUrl.startsWith('file://')) {
+      normalizedUrl = `/uploads/${fileUrl.replace('file://', '')}`;
+    } 
+    // Handle relative paths that don't start with /
+    else if (!fileUrl.startsWith('/') && !fileUrl.startsWith('http')) {
+      normalizedUrl = `/uploads/${fileUrl}`;
+    }
+    // Handle hackeruerdendacker.png direct filename
+    else if (!fileUrl.includes('/') && !fileUrl.startsWith('http')) {
+      normalizedUrl = `/uploads/${fileUrl}`;
+    }
+    
+    console.log('Original URL:', fileUrl);
+    console.log('Normalized URL:', normalizedUrl);
     
     setFinalUrl(normalizedUrl);
     
