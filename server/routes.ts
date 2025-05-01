@@ -13,6 +13,7 @@ import {
 } from "@shared/schema";
 import { sendEmail } from "./utils/email";
 import { authenticateUser, isAdmin } from "./middleware/auth";
+import { upload, getFileUrl } from "./utils/upload";
 import "express-session";
 
 // Extend Express Request type to include session

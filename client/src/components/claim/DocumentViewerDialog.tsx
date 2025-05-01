@@ -54,9 +54,9 @@ export function DocumentViewerDialog({
       <DialogContent className="max-w-5xl w-[95vw] h-[85vh] max-h-[800px] flex flex-col">
         <DialogHeader className="pb-4">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
+          <div className="text-sm text-muted-foreground mt-1">
             {fileName}
-          </DialogDescription>
+          </div>
         </DialogHeader>
         
         <div className="flex-1 overflow-auto border rounded-md bg-gray-50 p-4">
