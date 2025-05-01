@@ -1,8 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { academicRecordFormSchema, courseFormSchema } from "@/lib/validators";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { AcademicRecord, Course, StudyPlan } from "@shared/schema";
@@ -13,7 +10,6 @@ import CourseForm from "@/components/grade/CourseForm";
 import StudyPlanTable from "@/components/grade/StudyPlanTable";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { 
   Dialog, 
   DialogContent, 
@@ -22,6 +18,32 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Separate component for each semester accordion to solve the React hooks issue
+function SemesterItem({ 
+  academicRecord, 
+  isCurrentSemester,
+  onAddCourse
+}: { 
+  academicRecord: AcademicRecord;
+  isCurrentSemester: boolean;
+  onAddCourse: (record: AcademicRecord) => void;
+}) {
+  // Each SemesterItem has its own useQuery hook which is now at the top level
+  const { data: courses = [] } = useQuery<Course[]>({
+    queryKey: [`/api/academic-records/${academicRecord.id}/courses`],
+    enabled: !!academicRecord.id,
+  });
+  
+  return (
+    <SemesterAccordion
+      key={academicRecord.id}
+      academicRecord={academicRecord}
+      courses={courses}
+      isCurrentSemester={isCurrentSemester}
+    />
+  );
+}
 
 export default function Grades() {
   const { user } = useAuth();
@@ -32,36 +54,32 @@ export default function Grades() {
   const [selectedAcademicRecord, setSelectedAcademicRecord] = useState<AcademicRecord | null>(null);
   
   // Fetch academic records
-  const { data: academicRecords, isLoading: isLoadingRecords } = useQuery<AcademicRecord[]>({
+  const { data: academicRecords = [], isLoading: isLoadingRecords } = useQuery<AcademicRecord[]>({
     queryKey: ["/api/academic-records"],
   });
   
   // Fetch study plans
-  const { data: studyPlans, isLoading: isLoadingPlans } = useQuery<StudyPlan[]>({
+  const { data: studyPlans = [], isLoading: isLoadingPlans } = useQuery<StudyPlan[]>({
     queryKey: ["/api/study-plans"],
   });
   
   // Calculate academic stats
-  const currentGPA = academicRecords?.reduce((sum, record) => sum + (record.gpa || 0), 0) 
-    ? (academicRecords?.reduce((sum, record) => sum + (record.gpa || 0), 0) / 
-      academicRecords?.filter(record => record.gpa).length).toFixed(2)
+  const currentGPA = academicRecords.reduce((sum, record) => sum + (record.gpa || 0), 0) 
+    ? (academicRecords.reduce((sum, record) => sum + (record.gpa || 0), 0) / 
+      academicRecords.filter(record => record.gpa).length).toFixed(2)
     : "N/A";
   
-  const totalCredits = academicRecords?.reduce((sum, record) => sum + (record.ectsCredits || 0), 0) || 0;
+  const totalCredits = academicRecords.reduce((sum, record) => sum + (record.ectsCredits || 0), 0) || 0;
   
   // Get the current/latest semester
-  const currentRecord = academicRecords?.sort((a, b) => {
+  const currentRecord = academicRecords.length > 0 ? academicRecords.sort((a, b) => {
     // Compare year first
     const yearDiff = parseInt(b.year) - parseInt(a.year);
     if (yearDiff !== 0) return yearDiff;
     
     // If same year, compare semester (Winter > Summer)
     return a.semester === "Winter" ? 1 : -1;
-  })[0];
-  
-  // This function just creates the query key for a specific academic record
-  const getCoursesQueryKey = (academicRecordId: number) => 
-    [`/api/academic-records/${academicRecordId}/courses`];
+  })[0] : null;
   
   // Mutation for adding a new course
   const addCourseMutation = useMutation({
@@ -78,7 +96,7 @@ export default function Grades() {
       // Invalidate related queries
       if (selectedAcademicRecord) {
         queryClient.invalidateQueries({ 
-          queryKey: getCoursesQueryKey(selectedAcademicRecord.id) 
+          queryKey: [`/api/academic-records/${selectedAcademicRecord.id}/courses`] 
         });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/academic-records"] });
@@ -153,7 +171,7 @@ export default function Grades() {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-lg font-medium">Semester Results</h3>
-              {academicRecords && academicRecords.length > 0 && currentRecord && (
+              {academicRecords.length > 0 && currentRecord && (
                 <Button
                   onClick={() => handleAddCourse(currentRecord)}
                   size="sm"
@@ -168,27 +186,17 @@ export default function Grades() {
                 <Skeleton className="h-16 w-full" />
                 <Skeleton className="h-16 w-full" />
               </div>
-            ) : academicRecords && academicRecords.length > 0 ? (
-              <>
-                {academicRecords.map(record => {
-                  // Use useQuery at the top level for each academic record
-                  const queryKey = getCoursesQueryKey(record.id);
-                  const { data: courses } = useQuery<Course[]>({
-                    queryKey: queryKey,
-                    enabled: !!record.id
-                  });
-                  const isCurrentSemester = currentRecord?.id === record.id;
-                  
-                  return (
-                    <SemesterAccordion
-                      key={record.id}
-                      academicRecord={record}
-                      courses={courses || []}
-                      isCurrentSemester={isCurrentSemester}
-                    />
-                  );
-                })}
-              </>
+            ) : academicRecords.length > 0 ? (
+              <div>
+                {academicRecords.map(record => (
+                  <SemesterItem 
+                    key={record.id}
+                    academicRecord={record}
+                    isCurrentSemester={currentRecord?.id === record.id}
+                    onAddCourse={handleAddCourse}
+                  />
+                ))}
+              </div>
             ) : (
               <Card className="p-4 text-center">
                 <p className="text-gray-500">No academic records found</p>
@@ -205,7 +213,7 @@ export default function Grades() {
             <Card className="p-4">
               {isLoadingPlans ? (
                 <Skeleton className="h-32 w-full" />
-              ) : studyPlans && studyPlans.length > 0 ? (
+              ) : studyPlans.length > 0 ? (
                 <StudyPlanTable studyPlans={studyPlans} />
               ) : (
                 <div className="text-center py-4">
