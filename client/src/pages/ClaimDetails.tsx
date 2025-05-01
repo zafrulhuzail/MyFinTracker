@@ -60,7 +60,6 @@ export default function ClaimDetails() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-screen overflow-hidden">
-        <AppHeader title="Claim Details" />
         <div className="flex-1 overflow-auto pb-16 px-4 py-6">
           <Skeleton className="h-8 w-3/4 mb-4" />
           <Skeleton className="h-4 w-1/2 mb-8" />
@@ -75,7 +74,6 @@ export default function ClaimDetails() {
   if (!claim) {
     return (
       <div className="flex flex-col h-screen overflow-hidden">
-        <AppHeader title="Claim Details" />
         <div className="flex-1 overflow-auto pb-16 px-4 py-6 flex items-center justify-center">
           <Card className="w-full max-w-md mx-auto">
             <CardContent className="pt-6 flex flex-col items-center">
@@ -96,8 +94,6 @@ export default function ClaimDetails() {
   
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <AppHeader title="Claim Details" />
-      
       <div className="flex-1 overflow-auto pb-16">
         <div className="px-4 py-6">
           {/* Claim Header */}
