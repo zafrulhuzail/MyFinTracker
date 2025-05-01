@@ -132,8 +132,6 @@ export default function AdminDashboard() {
   
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <AppHeader title="Admin Dashboard" />
-      
       <div className="flex-1 overflow-auto pb-16">
         <div className="px-4 py-6">
           <div className="mb-4">
