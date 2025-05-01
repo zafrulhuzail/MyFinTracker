@@ -272,6 +272,9 @@ export default function Grades() {
             <DialogTitle>
               Upload Grades Document
             </DialogTitle>
+            <DialogDescription>
+              Upload your academic document for automatic grade extraction
+            </DialogDescription>
           </DialogHeader>
           
           {currentRecord && (
