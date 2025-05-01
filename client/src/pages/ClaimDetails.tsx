@@ -7,7 +7,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 import AppHeader from "@/components/layout/AppHeader";
-import BottomNavigation from "@/components/layout/BottomNavigation";
 import ClaimReviewForm from "@/components/admin/ClaimReviewForm";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
@@ -49,8 +48,9 @@ export default function ClaimDetails() {
   }, [id, setLocation]);
   
   // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -68,7 +68,6 @@ export default function ClaimDetails() {
           <Skeleton className="h-32 w-full mb-4" />
           <Skeleton className="h-32 w-full" />
         </div>
-        <BottomNavigation />
       </div>
     );
   }
@@ -91,7 +90,6 @@ export default function ClaimDetails() {
             </CardContent>
           </Card>
         </div>
-        <BottomNavigation />
       </div>
     );
   }
@@ -301,8 +299,6 @@ export default function ClaimDetails() {
           </div>
         </div>
       </div>
-      
-      <BottomNavigation />
     </div>
   );
 }

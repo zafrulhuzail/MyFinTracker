@@ -4,7 +4,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { AcademicRecord, Course, StudyPlan } from "@shared/schema";
 import AppHeader from "@/components/layout/AppHeader";
-import BottomNavigation from "@/components/layout/BottomNavigation";
 import SemesterAccordion from "@/components/grade/SemesterAccordion";
 import CourseForm from "@/components/grade/CourseForm";
 import StudyPlanTable from "@/components/grade/StudyPlanTable";
@@ -249,7 +248,7 @@ export default function Grades() {
         </DialogContent>
       </Dialog>
       
-      <BottomNavigation />
+
     </div>
   );
 }
