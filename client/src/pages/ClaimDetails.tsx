@@ -239,17 +239,19 @@ export default function ClaimDetails() {
                         <Eye className="h-4 w-4" />
                         <span className="hidden sm:inline">View</span>
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="flex items-center gap-1"
-                        asChild
-                      >
-                        <a href={claim.supportingDocFile} download target="_blank" rel="noopener noreferrer">
-                          <DownloadCloud className="h-4 w-4" />
-                          <span className="hidden sm:inline">Download</span>
-                        </a>
-                      </Button>
+                      {claim.supportingDocFile && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex items-center gap-1"
+                          asChild
+                        >
+                          <a href={claim.supportingDocFile} download target="_blank" rel="noopener noreferrer">
+                            <DownloadCloud className="h-4 w-4" />
+                            <span className="hidden sm:inline">Download</span>
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
