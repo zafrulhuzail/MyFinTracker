@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { claimFormSchema } from "@/lib/validators";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
 import {
@@ -46,10 +46,10 @@ export default function ClaimForm() {
     }
   });
   
-  const claimType = form.watch("claimType");
+  const claimType = form.watch("claimType") as string | undefined;
   
   // Need supporting document for these claim types
-  const needsSupportingDoc = ["Practical Allowance", "End of Study Allowance", "Flight Ticket"].includes(claimType as string);
+  const needsSupportingDoc = claimType ? ["Practical Allowance", "End of Study Allowance", "Flight Ticket"].includes(claimType) : false;
   
   const onSubmit = async (data: any) => {
     try {
@@ -60,6 +60,9 @@ export default function ClaimForm() {
       
       // Make API request to create claim
       await apiRequest("POST", "/api/claims", submitData);
+      
+      // Invalidate claims query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
       
       toast({
         title: "Claim submitted successfully",
