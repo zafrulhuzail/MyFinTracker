@@ -16,9 +16,11 @@ import Grades from "@/pages/Grades";
 import Profile from "@/pages/Profile";
 import AdminDashboard from "@/pages/AdminDashboard";
 import ClaimDetails from "@/pages/ClaimDetails";
+import StudentDirectory from "@/pages/StudentDirectory";
+import ClaimsManagement from "@/pages/ClaimsManagement";
 
 function ProtectedRoutes() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
   const [, setLocation] = useLocation();
   
   // Check if user is logged in
@@ -30,8 +32,6 @@ function ProtectedRoutes() {
     setLocation("/login");
     return null;
   }
-  
-  const { isAdmin } = useAuth();
 
   return (
     <Layout>
@@ -40,8 +40,8 @@ function ProtectedRoutes() {
           // Admin Routes
           <>
             <Route path="/admin" component={AdminDashboard} />
-            <Route path="/admin/students" component={() => <div>Student Directory - Coming Soon</div>} />
-            <Route path="/admin/claims" component={ClaimHistory} />
+            <Route path="/admin/students" component={StudentDirectory} />
+            <Route path="/admin/claims" component={ClaimsManagement} />
             <Route path="/profile" component={Profile} />
             <Route path="/" component={AdminDashboard} />
           </>

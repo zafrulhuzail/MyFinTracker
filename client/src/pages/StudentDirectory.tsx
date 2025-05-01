@@ -64,7 +64,9 @@ export default function StudentDirectory() {
   });
   
   // Get unique countries for tabs
-  const countries = [...new Set(users?.filter(u => u.role !== "admin").map(u => u.countryOfStudy))];
+  const countries = users
+    ? Array.from(new Set(users.filter(u => u.role !== "admin").map(u => u.countryOfStudy)))
+    : [];
   
   return (
     <div className="flex flex-col min-h-screen">
