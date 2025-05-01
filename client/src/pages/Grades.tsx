@@ -122,11 +122,11 @@ export default function Grades() {
   };
   
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col min-h-screen">
       <AppHeader title="Academic Progress" />
       
-      <div className="flex-1 overflow-auto pb-16">
-        <div className="px-4 py-6">
+      <div className="flex-1">
+        <div className="px-4 py-6 container mx-auto max-w-4xl">
           <div className="mb-4">
             <h2 className="text-2xl font-bold">Academic Progress</h2>
             <p className="text-gray-600">Update your academic information and grades</p>
