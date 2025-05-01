@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Initialize PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface DocumentViewerProps {
   fileUrl: string;
@@ -183,6 +183,16 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
           <Button variant="outline" size="sm" onClick={rotate}>
             <RotateCw className="h-4 w-4" />
           </Button>
+          <a 
+            href={finalFileUrl} 
+            download 
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4" />
+            </Button>
+          </a>
         </div>
 
         {isPdf && numPages && (
