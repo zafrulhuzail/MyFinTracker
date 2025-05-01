@@ -83,7 +83,7 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
                       )}>
                         <div className="font-medium mb-1">{notification.title}</div>
                         <div className="text-sm text-gray-600 mb-1">{notification.message}</div>
-                        <div className="text-xs text-gray-500">{formatDate(notification.createdAt)}</div>
+                        <div className="text-xs text-gray-500">{formatDate(notification.createdAt.toString())}</div>
                       </Card>
                     </DropdownMenuItem>
                   ))

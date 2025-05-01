@@ -1,19 +1,15 @@
-import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Claim, Notification } from "@shared/schema";
-import AppHeader from "@/components/layout/AppHeader";
-import BottomNavigation from "@/components/layout/BottomNavigation";
-import StatCard from "@/components/dashboard/StatCard";
-import UpdateCard from "@/components/dashboard/UpdateCard";
+import { PlusCircle, History, GraduationCap, User, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   
   // Fetch claims data
   const { data: claims, isLoading: isLoadingClaims } = useQuery<Claim[]>({
@@ -28,138 +24,183 @@ export default function Home() {
   // Stats calculation
   const pendingClaims = claims?.filter(claim => claim.status === "pending").length || 0;
   const approvedClaims = claims?.filter(claim => claim.status === "approved").length || 0;
+  const rejectedClaims = claims?.filter(claim => claim.status === "rejected").length || 0;
   
   // Get latest notifications
   const latestNotifications = notifications
     ?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
   
-  // Map notification type
-  const getNotificationType = (title: string): "success" | "warning" | "info" | "error" => {
-    if (title.includes("Approved")) return "success";
-    if (title.includes("Rejected")) return "error";
-    if (title.includes("Pending") || title.includes("Review")) return "warning";
-    return "info";
+  // Format date
+  function formatDate(dateString: string) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  
+  // Get notification badge variant
+  const getNotificationVariant = (title: string): "default" | "destructive" | "outline" | "secondary" | null => {
+    if (title.includes("Approved")) return "default";
+    if (title.includes("Rejected")) return "destructive";
+    if (title.includes("Pending") || title.includes("Submitted")) return "secondary";
+    return "outline";
   };
   
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <AppHeader />
+    <>
+      {/* Welcome Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back, {user?.fullName.split(' ')[0] || "Student"}!
+        </h1>
+        <p className="text-gray-500">
+          Here's an overview of your claims and academic progress
+        </p>
+      </div>
       
-      <div className="flex-1 overflow-auto pb-16">
-        <div className="px-4 py-6">
-          {/* Welcome Section */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold">
-              Welcome back, {user?.fullName.split(' ')[0] || "Student"}!
-            </h2>
-            <p className="text-gray-600 mt-1">
-              MARA Student ID: {user?.maraId || ""}
-            </p>
-          </div>
-          
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {isLoadingClaims ? (
-              <>
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </>
-            ) : (
-              <>
-                <StatCard
-                  title="Pending Claims"
-                  value={pendingClaims}
-                  color="text-primary"
-                />
-                <StatCard
-                  title="Approved Claims"
-                  value={approvedClaims}
-                  color="text-success"
-                />
-              </>
-            )}
-          </div>
-          
-          {/* Latest Updates */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium mb-3">Latest Updates</h3>
-            <Card className="overflow-hidden">
-              {isLoadingNotifications ? (
-                <div className="p-4">
-                  <Skeleton className="h-16 w-full mb-4" />
-                  <Skeleton className="h-16 w-full" />
-                </div>
-              ) : latestNotifications && latestNotifications.length > 0 ? (
-                latestNotifications.map((notification) => (
-                  <UpdateCard
-                    key={notification.id}
-                    title={notification.title}
-                    message={notification.message}
-                    type={getNotificationType(notification.title)}
-                    timestamp={new Date(notification.createdAt)}
-                  />
-                ))
-              ) : (
-                <CardContent className="py-8 text-center text-gray-500">
-                  No updates available
-                </CardContent>
-              )}
+      {/* Quick Stats */}
+      <div className="grid gap-6 md:grid-cols-3 mb-8">
+        {isLoadingClaims ? (
+          <>
+            <Skeleton className="h-32 rounded-lg" />
+            <Skeleton className="h-32 rounded-lg" />
+            <Skeleton className="h-32 rounded-lg" />
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium">Pending Claims</CardTitle>
+                <CardDescription>Claims awaiting review</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">{pendingClaims}</div>
+              </CardContent>
             </Card>
-          </div>
-          
-          {/* Quick Actions */}
-          <div className="mb-6">
-            <h3 className="text-lg font-medium mb-3">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium">Approved Claims</CardTitle>
+                <CardDescription>Successfully processed</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-success-foreground">{approvedClaims}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium">Rejected Claims</CardTitle>
+                <CardDescription>Requires attention</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-error">{rejectedClaims}</div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+      
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Quick Actions */}
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
               <Link to="/new-claim">
-                <Button className="w-full h-20 bg-primary flex flex-col gap-1">
-                  <span className="material-icons">add_circle</span>
-                  <span>New Claim</span>
+                <Button className="w-full justify-start gap-2" size="lg">
+                  <PlusCircle className="h-5 w-5" />
+                  New Claim
                 </Button>
               </Link>
               <Link to="/history">
-                <Button className="w-full h-20 bg-secondary flex flex-col gap-1">
-                  <span className="material-icons">history</span>
-                  <span>Claim History</span>
+                <Button className="w-full justify-start gap-2" size="lg" variant="outline">
+                  <History className="h-5 w-5" />
+                  View History
                 </Button>
               </Link>
               <Link to="/grades">
-                <Button className="w-full h-20 bg-accent text-black flex flex-col gap-1">
-                  <span className="material-icons">school</span>
-                  <span>Update Grades</span>
+                <Button className="w-full justify-start gap-2" size="lg" variant="outline">
+                  <GraduationCap className="h-5 w-5" />
+                  Academic Records
                 </Button>
               </Link>
               <Link to="/profile">
-                <Button className="w-full h-20 bg-gray-600 flex flex-col gap-1">
-                  <span className="material-icons">person</span>
-                  <span>Profile</span>
+                <Button className="w-full justify-start gap-2" size="lg" variant="outline">
+                  <User className="h-5 w-5" />
+                  Profile
                 </Button>
               </Link>
-            </div>
-          </div>
-          
-          {/* Upcoming Deadlines */}
-          <div>
-            <h3 className="text-lg font-medium mb-3">Upcoming Deadlines</h3>
-            <Card className="p-4">
-              <div className="flex items-center mb-3">
-                <span className="material-icons text-error mr-2">event</span>
-                <p className="font-medium">End of Semester Report</p>
-              </div>
-              <p className="text-gray-600 mb-2">Submit your semester grades and progress report</p>
-              <div className="flex justify-between items-center">
-                <p className="text-error font-medium">Due in 5 days</p>
-                <Link to="/grades">
-                  <Button size="sm">Submit Now</Button>
-                </Link>
-              </div>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Latest Updates */}
+        <div className="md:col-span-2">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Latest Updates</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingNotifications ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                  <Skeleton className="h-20" />
+                </div>
+              ) : latestNotifications && latestNotifications.length > 0 ? (
+                <div className="space-y-4">
+                  {latestNotifications.map((notification) => (
+                    <div key={notification.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between mb-2">
+                        <div className="font-medium">{notification.title}</div>
+                        <Badge variant={getNotificationVariant(notification.title)}>
+                          {notification.title.includes("Approved") ? "Approved" :
+                           notification.title.includes("Rejected") ? "Rejected" :
+                           notification.title.includes("Submitted") ? "Submitted" : "Info"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+                      <div className="text-xs text-gray-500">{formatDate(notification.createdAt.toString())}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-500">
+                  No updates available
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
       
-      <BottomNavigation />
-    </div>
+      {/* Upcoming Deadlines */}
+      <div className="mt-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Upcoming Deadlines</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start gap-4">
+              <div className="bg-error/10 p-2 rounded-full">
+                <Calendar className="h-5 w-5 text-error" />
+              </div>
+              <div>
+                <h4 className="font-medium">End of Semester Report</h4>
+                <p className="text-gray-600 text-sm mt-1 mb-2">Submit your semester grades and progress report</p>
+                <div className="text-error text-sm font-medium">Due in 5 days</div>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="pt-0 justify-end">
+            <Link to="/grades">
+              <Button>Submit Report</Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    </>
   );
 }

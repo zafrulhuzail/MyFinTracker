@@ -40,7 +40,7 @@ function NavItem({ to, label, icon, active }: NavItemProps) {
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Don't render sidebar on login and register pages
@@ -161,7 +161,7 @@ export default function Sidebar() {
           <Button 
             variant="outline" 
             className="w-full justify-start text-gray-600"
-            onClick={() => {}}
+            onClick={() => logout()}
           >
             Log Out
           </Button>
