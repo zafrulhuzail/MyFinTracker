@@ -150,7 +150,13 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
     const now = new Date();
-    const user: User = { ...insertUser, id, createdAt: now };
+    const role = insertUser.role || 'student'; // Ensure role is always set
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      createdAt: now,
+      role 
+    };
     this.users.set(id, user);
     return user;
   }
@@ -196,7 +202,9 @@ export class MemStorage implements IStorage {
       reviewedBy: null, 
       reviewedAt: null, 
       createdAt: now, 
-      updatedAt: now 
+      updatedAt: now,
+      description: insertClaim.description || null,
+      supportingDocFile: insertClaim.supportingDocFile || null
     };
     this.claims.set(id, claim);
     return claim;
@@ -234,7 +242,15 @@ export class MemStorage implements IStorage {
   async createAcademicRecord(insertRecord: InsertAcademicRecord): Promise<AcademicRecord> {
     const id = this.academicRecordId++;
     const now = new Date();
-    const record: AcademicRecord = { ...insertRecord, id, createdAt: now, updatedAt: now };
+    const record: AcademicRecord = { 
+      ...insertRecord, 
+      id, 
+      createdAt: now, 
+      updatedAt: now,
+      gpa: insertRecord.gpa || null,
+      ectsCredits: insertRecord.ectsCredits || null,
+      isCompleted: insertRecord.isCompleted || false
+    };
     this.academicRecords.set(id, record);
     return record;
   }
@@ -262,7 +278,11 @@ export class MemStorage implements IStorage {
   
   async createCourse(insertCourse: InsertCourse): Promise<Course> {
     const id = this.courseId++;
-    const course: Course = { ...insertCourse, id };
+    const course: Course = { 
+      ...insertCourse, 
+      id,
+      grade: insertCourse.grade || null
+    };
     this.courses.set(id, course);
     return course;
   }
