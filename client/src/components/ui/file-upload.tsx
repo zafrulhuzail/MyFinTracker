@@ -123,6 +123,17 @@ export function FileUpload({
     }
     setUploadStatus('idle');
     setUploadedFileName(null);
+    setUploadProgress(0);
+    
+    // Allow for a new upload
+    if (onUploadComplete) {
+      onUploadComplete({
+        fileName: '',
+        fileUrl: '',
+        fileSize: 0,
+        mimeType: ''
+      });
+    }
   };
 
   return (

@@ -9,7 +9,15 @@ export default function FileUploadTest() {
 
   const handleUploadComplete = (fileData: FileUploadResponse) => {
     console.log('Upload complete. File data:', fileData);
-    setUploadedFile(fileData);
+    
+    // Only set the file if it's not an empty reset
+    if (fileData.fileName && fileData.fileUrl) {
+      setUploadedFile(fileData);
+    } else {
+      // Reset state if empty file data (reset action)
+      setUploadedFile(null);
+      setIsViewerOpen(false);
+    }
   };
 
   return (

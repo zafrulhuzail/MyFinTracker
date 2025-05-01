@@ -57,6 +57,7 @@ function ProtectedRoutes() {
             <Route path="/grades" component={Grades} />
             <Route path="/profile" component={Profile} />
             <Route path="/claims/:id" component={ClaimDetails} />
+            <Route path="/upload-test" component={FileUploadTest} />
           </>
         )}
         <Route component={NotFound} />
