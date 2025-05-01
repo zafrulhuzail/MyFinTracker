@@ -14,7 +14,8 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 // Set PDF.js worker path
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.min.js';
+// Use CDN for worker file - this is more reliable than local file
+pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
 interface DocumentViewerDialogProps {
   isOpen: boolean;
@@ -82,9 +83,9 @@ export function DocumentViewerDialog({
       <DialogContent className="max-w-5xl w-[95vw] h-[85vh] max-h-[800px] flex flex-col">
         <DialogHeader className="pb-4">
           <DialogTitle>{title}</DialogTitle>
-          <div className="text-sm text-muted-foreground mt-1">
+          <DialogDescription className="text-sm text-muted-foreground mt-1">
             {fileName}
-          </div>
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex-1 overflow-auto border rounded-md bg-gray-50 p-4">
