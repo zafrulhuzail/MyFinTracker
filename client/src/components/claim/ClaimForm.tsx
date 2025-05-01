@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { FileUpload } from "@/components/ui/file-upload";
+import { FileUpload } from "@/components/ui/file-input";
 
 export default function ClaimForm() {
   const { user } = useAuth();
