@@ -39,7 +39,15 @@ export function DocumentViewerDialog({
         
         <div className="flex justify-end mt-4">
           <Button asChild variant="outline" className="flex items-center gap-1">
-            <a href={fileUrl} download={fileName} target="_blank" rel="noopener">
+            <a 
+              href={fileUrl.startsWith('file://') 
+                ? `/uploads/${fileUrl.replace('file://', '')}` 
+                : fileUrl
+              } 
+              download={fileName} 
+              target="_blank" 
+              rel="noopener"
+            >
               <DownloadCloud className="h-4 w-4 mr-1" />
               Download
             </a>

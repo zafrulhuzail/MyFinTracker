@@ -214,7 +214,15 @@ export default function ClaimDetails() {
                       className="flex items-center gap-1"
                       asChild
                     >
-                      <a href={claim.receiptFile} download target="_blank" rel="noopener noreferrer">
+                      <a 
+                        href={claim.receiptFile.startsWith('file://') 
+                          ? `/uploads/${claim.receiptFile.replace('file://', '')}` 
+                          : claim.receiptFile
+                        } 
+                        download 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                      >
                         <DownloadCloud className="h-4 w-4" />
                         <span className="hidden sm:inline">Download</span>
                       </a>
@@ -252,7 +260,15 @@ export default function ClaimDetails() {
                           className="flex items-center gap-1"
                           asChild
                         >
-                          <a href={claim.supportingDocFile} download target="_blank" rel="noopener noreferrer">
+                          <a 
+                            href={claim.supportingDocFile.startsWith('file://') 
+                              ? `/uploads/${claim.supportingDocFile.replace('file://', '')}` 
+                              : claim.supportingDocFile
+                            } 
+                            download 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                          >
                             <DownloadCloud className="h-4 w-4" />
                             <span className="hidden sm:inline">Download</span>
                           </a>
