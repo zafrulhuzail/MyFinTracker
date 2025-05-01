@@ -59,13 +59,9 @@ export default function Grades() {
     return a.semester === "Winter" ? 1 : -1;
   })[0];
   
-  // Course data fetching functions for each academic record
-  const getCoursesByAcademicRecord = (academicRecordId: number) => {
-    return useQuery<Course[]>({
-      queryKey: [`/api/academic-records/${academicRecordId}/courses`],
-      enabled: !!academicRecordId,
-    });
-  };
+  // This function just creates the query key for a specific academic record
+  const getCoursesQueryKey = (academicRecordId: number) => 
+    [`/api/academic-records/${academicRecordId}/courses`];
   
   // Mutation for adding a new course
   const addCourseMutation = useMutation({
@@ -81,7 +77,9 @@ export default function Grades() {
       
       // Invalidate related queries
       if (selectedAcademicRecord) {
-        queryClient.invalidateQueries({ queryKey: [`/api/academic-records/${selectedAcademicRecord.id}/courses`] });
+        queryClient.invalidateQueries({ 
+          queryKey: getCoursesQueryKey(selectedAcademicRecord.id) 
+        });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/academic-records"] });
       
@@ -171,19 +169,26 @@ export default function Grades() {
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : academicRecords && academicRecords.length > 0 ? (
-              academicRecords.map(record => {
-                const { data: courses, isLoading } = getCoursesByAcademicRecord(record.id);
-                const isCurrentSemester = currentRecord?.id === record.id;
-                
-                return (
-                  <SemesterAccordion
-                    key={record.id}
-                    academicRecord={record}
-                    courses={courses || []}
-                    isCurrentSemester={isCurrentSemester}
-                  />
-                );
-              })
+              <>
+                {academicRecords.map(record => {
+                  // Use useQuery at the top level for each academic record
+                  const queryKey = getCoursesQueryKey(record.id);
+                  const { data: courses } = useQuery<Course[]>({
+                    queryKey: queryKey,
+                    enabled: !!record.id
+                  });
+                  const isCurrentSemester = currentRecord?.id === record.id;
+                  
+                  return (
+                    <SemesterAccordion
+                      key={record.id}
+                      academicRecord={record}
+                      courses={courses || []}
+                      isCurrentSemester={isCurrentSemester}
+                    />
+                  );
+                })}
+              </>
             ) : (
               <Card className="p-4 text-center">
                 <p className="text-gray-500">No academic records found</p>
