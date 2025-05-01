@@ -54,9 +54,9 @@ export default function Sidebar() {
       {/* Mobile Header */}
       <div className="lg:hidden bg-white border-b border-gray-200 p-4 sticky top-0 z-30 flex justify-between items-center">
         <h1 className="text-xl font-semibold">
-          <span className="text-primary">MARA</span>
-          <span className="text-teal-500">Nexus</span>
-          <span className="text-slate-700"> Scholar</span>
+          <span className="text-primary">My</span>
+          <span className="text-teal-500">Fin</span>
+          <span className="text-slate-700">Tracker</span>
         </h1>
         <Button 
           variant="ghost" 
@@ -78,16 +78,16 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div 
         className={cn(
-          "bg-white border-r border-gray-200 w-64 shrink-0 fixed lg:static lg:translate-x-0 h-[calc(100vh-64px)] lg:h-screen z-50 transition-transform duration-300",
+          "bg-white border-r border-gray-200 w-64 shrink-0 fixed lg:static lg:translate-x-0 h-[calc(100vh-64px)] lg:h-screen z-50 transition-transform duration-300 flex flex-col overflow-hidden",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo/Brand */}
         <div className="hidden lg:flex h-16 items-center border-b border-gray-200 px-6">
           <h1 className="text-xl font-semibold">
-            <span className="text-primary">MARA</span>
-            <span className="text-teal-500">Nexus</span>
-            <span className="text-slate-700"> Scholar</span>
+            <span className="text-primary">My</span>
+            <span className="text-teal-500">Fin</span>
+            <span className="text-slate-700">Tracker</span>
           </h1>
         </div>
         

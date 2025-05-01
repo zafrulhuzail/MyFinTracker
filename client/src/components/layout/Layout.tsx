@@ -50,12 +50,12 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const unreadNotifications = notifications?.filter(n => !n.isRead) || [];
   
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 h-16 shrink-0 flex items-center px-6 sticky top-0 z-20">
+        <header className="bg-white border-b border-gray-200 h-16 shrink-0 flex items-center px-6 z-20">
           <h1 className="text-xl font-semibold">{title}</h1>
           
           <div className="ml-auto flex items-center gap-4">
@@ -98,7 +98,7 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
         </header>
         
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 overflow-y-auto">
           {children}
         </main>
       </div>
