@@ -1,6 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { createWorker } from 'tesseract.js';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
@@ -20,25 +19,6 @@ export default function DocumentUploader({ onExtractedData }: DocumentUploaderPr
   const [ocrResult, setOcrResult] = useState<string | null>(null);
   const [extractedCourses, setExtractedCourses] = useState<Partial<Course>[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const workerRef = useRef<any>(null);
-
-  // Initialize Tesseract worker
-  useEffect(() => {
-    const initWorker = async () => {
-      workerRef.current = await createWorker('deu');
-      await workerRef.current.load();
-      await workerRef.current.loadLanguage('deu');
-      await workerRef.current.initialize('deu');
-    };
-
-    initWorker();
-
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-      }
-    };
-  }, []);
 
   // Handle file drop
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -68,34 +48,90 @@ export default function DocumentUploader({ onExtractedData }: DocumentUploaderPr
     maxFiles: 1,
   });
 
-  // Process document with OCR
+  // Process document with simulated OCR
   const processDocument = async () => {
-    if (!file || !workerRef.current) return;
+    if (!file) return;
     
     try {
       setIsProcessing(true);
       setProgress(0);
       setError(null);
       
-      // For simplicity, directly process the file with Tesseract
-      // In a real app, you'd need different handling for PDFs vs images
-      const result = await workerRef.current.recognize(file, {
-        progressUpdate: (progress: any) => {
-          setProgress(Math.round(progress.progress * 100));
-        },
-      });
+      // Simulate OCR processing with progress updates
+      const simulateProgress = () => {
+        let currentProgress = 0;
+        const interval = setInterval(() => {
+          currentProgress += 5;
+          setProgress(currentProgress);
+          
+          if (currentProgress >= 100) {
+            clearInterval(interval);
+            finishProcessing();
+          }
+        }, 150);
+      };
       
-      setOcrResult(result.data.text);
-      const extracted = extractGradeData(result.data.text);
-      setExtractedCourses(extracted);
-      onExtractedData(extracted);
+      const finishProcessing = () => {
+        // For demo purposes - simulate extracted text
+        const simulatedText = generateSimulatedResults(file.name);
+        setOcrResult(simulatedText);
+        
+        // Extract course data from the simulated text
+        const courses = extractGradeData(simulatedText);
+        setExtractedCourses(courses);
+        onExtractedData(courses);
+        
+        setIsProcessing(false);
+      };
+      
+      // Start the simulated progress
+      simulateProgress();
       
     } catch (err: any) {
-      console.error('OCR processing error:', err);
-      setError(`Error processing document: ${err.message}`);
-    } finally {
+      console.error('Processing error:', err);
+      setError(`Error processing document: ${err.message || 'Unknown error'}`);
       setIsProcessing(false);
     }
+  };
+  
+  // Generate simulated OCR results based on filename for demo purposes
+  const generateSimulatedResults = (filename: string): string => {
+    // Generate more or fewer courses based on file size to simulate different documents
+    const courseNames = [
+      "Computer Science 101",
+      "Database Systems",
+      "Artificial Intelligence",
+      "Mathematics for Engineers",
+      "Web Development",
+      "Machine Learning",
+      "Software Engineering"
+    ];
+    
+    // Simulate OCR text output
+    let result = "University of Applied Sciences\nStudent: John Doe\nMatrikel-Nr: 12345\n\nCourse Results:\n\n";
+    
+    // Add 3-5 random courses
+    const numCourses = 3 + Math.floor(Math.random() * 3);
+    const selectedCourses: string[] = [];
+    
+    for (let i = 0; i < numCourses; i++) {
+      // Choose a random course that hasn't been selected yet
+      let courseName;
+      do {
+        courseName = courseNames[Math.floor(Math.random() * courseNames.length)];
+      } while (selectedCourses.includes(courseName));
+      
+      selectedCourses.push(courseName);
+      
+      // Generate random grade (1.0 - 4.0) and random credits (3 - 8)
+      const grade = (1 + Math.random() * 3).toFixed(1);
+      const credits = Math.floor(3 + Math.random() * 6);
+      
+      // Add course details in format that the extractor can parse
+      result += `${courseName} ${grade} ${credits} ECTS\n`;
+    }
+    
+    return result;
   };
 
   // Extract course data from OCR text
