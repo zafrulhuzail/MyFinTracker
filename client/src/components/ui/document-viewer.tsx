@@ -119,7 +119,7 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
         
         {isPdf ? (
           <Document
-            file={cleanFileUrl}
+            file={finalFileUrl}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={<Skeleton className="w-full h-full min-h-[300px]" />}
@@ -134,7 +134,7 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
         ) : isImage ? (
           <div className="flex items-center justify-center h-full">
             <img 
-              src={cleanFileUrl} 
+              src={finalFileUrl} 
               alt="Document preview" 
               style={{ 
                 transform: `scale(${scale}) rotate(${rotation}deg)`,
