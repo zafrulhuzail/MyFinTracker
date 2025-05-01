@@ -19,6 +19,8 @@ import {
   type InsertNotification, 
   type UpdateClaimStatus
 } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { db } from "./db";
 
 // Interface for storage operations
 export interface IStorage {
@@ -316,4 +318,205 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+  
+  async getUserByMaraId(maraId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.maraId, maraId));
+    return user || undefined;
+  }
+  
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+  
+  async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+  
+  // Claim operations
+  async getClaim(id: number): Promise<Claim | undefined> {
+    const [claim] = await db.select().from(claims).where(eq(claims.id, id));
+    return claim || undefined;
+  }
+  
+  async getClaimsByUser(userId: number): Promise<Claim[]> {
+    return db.select().from(claims).where(eq(claims.userId, userId));
+  }
+  
+  async getAllClaims(): Promise<Claim[]> {
+    return db.select().from(claims);
+  }
+  
+  async getClaimsByStatus(status: string): Promise<Claim[]> {
+    return db.select().from(claims).where(eq(claims.status, status));
+  }
+  
+  async createClaim(insertClaim: InsertClaim): Promise<Claim> {
+    const [claim] = await db.insert(claims).values(insertClaim).returning();
+    return claim;
+  }
+  
+  async updateClaimStatus(id: number, data: UpdateClaimStatus, reviewedBy: number): Promise<Claim | undefined> {
+    const [claim] = await db
+      .update(claims)
+      .set({
+        status: data.status,
+        reviewComment: data.reviewComment || null,
+        reviewedBy,
+        reviewedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(claims.id, id))
+      .returning();
+    return claim || undefined;
+  }
+  
+  // Academic record operations
+  async getAcademicRecord(id: number): Promise<AcademicRecord | undefined> {
+    const [record] = await db.select().from(academicRecords).where(eq(academicRecords.id, id));
+    return record || undefined;
+  }
+  
+  async getAcademicRecordsByUser(userId: number): Promise<AcademicRecord[]> {
+    return db.select().from(academicRecords).where(eq(academicRecords.userId, userId));
+  }
+  
+  async createAcademicRecord(insertRecord: InsertAcademicRecord): Promise<AcademicRecord> {
+    const [record] = await db.insert(academicRecords).values(insertRecord).returning();
+    return record;
+  }
+  
+  async updateAcademicRecord(id: number, data: Partial<AcademicRecord>): Promise<AcademicRecord | undefined> {
+    const [record] = await db
+      .update(academicRecords)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(academicRecords.id, id))
+      .returning();
+    return record || undefined;
+  }
+  
+  // Course operations
+  async getCourse(id: number): Promise<Course | undefined> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    return course || undefined;
+  }
+  
+  async getCoursesByAcademicRecord(academicRecordId: number): Promise<Course[]> {
+    return db.select().from(courses).where(eq(courses.academicRecordId, academicRecordId));
+  }
+  
+  async createCourse(insertCourse: InsertCourse): Promise<Course> {
+    const [course] = await db.insert(courses).values(insertCourse).returning();
+    return course;
+  }
+  
+  async updateCourse(id: number, data: Partial<Course>): Promise<Course | undefined> {
+    const [course] = await db
+      .update(courses)
+      .set(data)
+      .where(eq(courses.id, id))
+      .returning();
+    return course || undefined;
+  }
+  
+  // Study plan operations
+  async getStudyPlan(id: number): Promise<StudyPlan | undefined> {
+    const [plan] = await db.select().from(studyPlans).where(eq(studyPlans.id, id));
+    return plan || undefined;
+  }
+  
+  async getStudyPlansByUser(userId: number): Promise<StudyPlan[]> {
+    return db.select().from(studyPlans).where(eq(studyPlans.userId, userId));
+  }
+  
+  async createStudyPlan(insertPlan: InsertStudyPlan): Promise<StudyPlan> {
+    const [plan] = await db.insert(studyPlans).values(insertPlan).returning();
+    return plan;
+  }
+  
+  // Notification operations
+  async getNotification(id: number): Promise<Notification | undefined> {
+    const [notification] = await db.select().from(notifications).where(eq(notifications.id, id));
+    return notification || undefined;
+  }
+  
+  async getNotificationsByUser(userId: number): Promise<Notification[]> {
+    return db.select().from(notifications).where(eq(notifications.userId, userId));
+  }
+  
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(insertNotification).returning();
+    return notification;
+  }
+  
+  async markNotificationAsRead(id: number): Promise<Notification | undefined> {
+    const [notification] = await db
+      .update(notifications)
+      .set({
+        isRead: true
+      })
+      .where(eq(notifications.id, id))
+      .returning();
+    return notification || undefined;
+  }
+}
+
+// Initialize database with admin user if needed
+async function initializeDatabase() {
+  const adminUser = await db.select().from(users).where(eq(users.username, "admin"));
+  
+  if (adminUser.length === 0) {
+    await db.insert(users).values({
+      username: "admin",
+      password: "admin123", // In a real app, this would be hashed
+      email: "admin@mara.gov.my",
+      fullName: "MARA Administrator",
+      nationalId: "admin-id",
+      maraId: "ADMIN-1",
+      phoneNumber: "+60123456789",
+      currentAddress: "MARA Headquarters, Kuala Lumpur",
+      countryOfStudy: "Malaysia",
+      university: "MARA",
+      fieldOfStudy: "Administration",
+      degreeLevel: "N/A",
+      maraGroup: "Admin",
+      sponsorshipPeriod: "N/A",
+      bankName: "N/A",
+      bankAddress: "N/A",
+      accountNumber: "N/A",
+      swiftCode: "N/A",
+      role: "admin"
+    });
+    console.log("Admin user created");
+  }
+}
+
+export const storage = new DatabaseStorage();
+
+// Initialize the database
+initializeDatabase().catch(console.error);
