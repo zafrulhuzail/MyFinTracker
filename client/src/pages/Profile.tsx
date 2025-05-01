@@ -102,7 +102,7 @@ export default function Profile() {
         <div className="flex-1 flex items-center justify-center">
           <Skeleton className="h-screen w-full" />
         </div>
-        <BottomNavigation />
+
       </div>
     );
   }
@@ -400,7 +400,7 @@ export default function Profile() {
         </div>
       </div>
       
-      <BottomNavigation />
+
     </div>
   );
 }

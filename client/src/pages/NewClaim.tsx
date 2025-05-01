@@ -21,7 +21,7 @@ export default function NewClaim() {
         </div>
       </div>
       
-      <BottomNavigation />
+
     </div>
   );
 }

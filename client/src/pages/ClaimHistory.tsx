@@ -116,7 +116,7 @@ export default function ClaimHistory() {
         </div>
       </div>
       
-      <BottomNavigation />
+
     </div>
   );
 }

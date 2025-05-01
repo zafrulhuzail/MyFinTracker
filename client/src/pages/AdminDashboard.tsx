@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Claim, User } from "@shared/schema";
 import AppHeader from "@/components/layout/AppHeader";
-import BottomNavigation from "@/components/layout/BottomNavigation";
 import AdminClaimList from "@/components/admin/AdminClaimList";
 import StatCard from "@/components/dashboard/StatCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -448,8 +447,6 @@ export default function AdminDashboard() {
           </Tabs>
         </div>
       </div>
-      
-      <BottomNavigation />
     </div>
   );
 }
