@@ -100,44 +100,9 @@ export default function Home() {
         )}
       </div>
       
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Quick Actions */}
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Link to="/new-claim">
-                <Button className="w-full justify-start gap-2" size="lg">
-                  <PlusCircle className="h-5 w-5" />
-                  New Claim
-                </Button>
-              </Link>
-              <Link to="/history">
-                <Button className="w-full justify-start gap-2" size="lg" variant="outline">
-                  <History className="h-5 w-5" />
-                  View History
-                </Button>
-              </Link>
-              <Link to="/grades">
-                <Button className="w-full justify-start gap-2" size="lg" variant="outline">
-                  <GraduationCap className="h-5 w-5" />
-                  Academic Records
-                </Button>
-              </Link>
-              <Link to="/profile">
-                <Button className="w-full justify-start gap-2" size="lg" variant="outline">
-                  <User className="h-5 w-5" />
-                  Profile
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-        
+      <div className="grid gap-6 md:grid-cols-1">
         {/* Latest Updates */}
-        <div className="md:col-span-2">
+        <div>
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="text-lg font-medium">Latest Updates</CardTitle>
