@@ -7,13 +7,15 @@ import AppHeader from "@/components/layout/AppHeader";
 import SemesterAccordion from "@/components/grade/SemesterAccordion";
 import CourseForm from "@/components/grade/CourseForm";
 import StudyPlanTable from "@/components/grade/StudyPlanTable";
+import DocumentUploader from "@/components/grade/DocumentUploader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle 
+  DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,6 +52,7 @@ export default function Grades() {
   const queryClient = useQueryClient();
   
   const [isAddingCourse, setIsAddingCourse] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
   const [selectedAcademicRecord, setSelectedAcademicRecord] = useState<AcademicRecord | null>(null);
   
   // Fetch academic records
@@ -170,14 +173,25 @@ export default function Grades() {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-lg font-medium">Semester Results</h3>
-              {academicRecords.length > 0 && currentRecord && (
-                <Button
-                  onClick={() => handleAddCourse(currentRecord)}
-                  size="sm"
-                >
-                  Update Grades
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {academicRecords.length > 0 && currentRecord && (
+                  <>
+                    <Button
+                      onClick={() => handleAddCourse(currentRecord)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      Add Course Manually
+                    </Button>
+                    <Button
+                      onClick={() => setUploadingDocument(true)}
+                      size="sm"
+                    >
+                      Upload Grades Document
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
             
             {isLoadingRecords ? (
@@ -234,6 +248,9 @@ export default function Grades() {
                 : "Add New Semester"
               }
             </DialogTitle>
+            <DialogDescription>
+              Enter the details of your course
+            </DialogDescription>
           </DialogHeader>
           
           {selectedAcademicRecord ? (
@@ -248,6 +265,76 @@ export default function Grades() {
         </DialogContent>
       </Dialog>
       
+      {/* Document Uploader Dialog */}
+      <Dialog open={uploadingDocument} onOpenChange={setUploadingDocument}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Upload Grades Document
+            </DialogTitle>
+          </DialogHeader>
+          
+          {currentRecord && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Upload your grade document for {currentRecord.semester} {currentRecord.year}. The system will try to extract your courses and grades automatically.
+              </p>
+              
+              <DocumentUploader 
+                onExtractedData={(courses) => {
+                  if (courses.length > 0 && currentRecord) {
+                    // Process the extracted courses
+                    const coursesToAdd = courses.map(course => ({
+                      ...course,
+                      academicRecordId: currentRecord.id,
+                      status: 'completed'
+                    }));
+                    
+                    // Add the courses one by one
+                    Promise.all(
+                      coursesToAdd.map(course => 
+                        apiRequest("POST", "/api/courses", course)
+                      )
+                    )
+                    .then(() => {
+                      // Invalidate related queries to refresh the data
+                      queryClient.invalidateQueries({ 
+                        queryKey: [`/api/academic-records/${currentRecord.id}/courses`]
+                      });
+                      queryClient.invalidateQueries({ 
+                        queryKey: ["/api/academic-records"]
+                      });
+                      
+                      toast({
+                        title: "Courses added successfully",
+                        description: `${courses.length} courses were extracted and added to your record.`,
+                      });
+                      
+                      setUploadingDocument(false);
+                    })
+                    .catch(error => {
+                      toast({
+                        title: "Failed to add courses",
+                        description: error.message || "An error occurred while adding the extracted courses.",
+                        variant: "destructive",
+                      });
+                    });
+                  }
+                }}
+              />
+              
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setUploadingDocument(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

@@ -118,8 +118,9 @@ export default function DocumentUploader({ onExtractedData }: DocumentUploaderPr
       if (courseMatch) {
         courses.push({
           name: courseMatch[1].trim(),
-          grade: parseFloat(courseMatch[2].replace(',', '.')),
-          credits: parseFloat(courseMatch[3].replace(',', '.')),
+          grade: courseMatch[2].replace(',', '.'),
+          credits: parseInt(courseMatch[3].replace(',', '.')),
+          status: 'completed'
         });
       }
     }
