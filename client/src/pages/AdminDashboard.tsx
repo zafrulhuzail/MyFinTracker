@@ -49,18 +49,28 @@ export default function AdminDashboard() {
     .reduce((total, claim) => total + claim.amount, 0) || 0;
   
   // Group claims by type for chart
-  const claimsByType = claims?.reduce((acc, claim) => {
-    if (!acc[claim.claimType]) {
-      acc[claim.claimType] = {
+  const claimsByType: Record<string, { pending: number; approved: number; rejected: number }> = {};
+  
+  // Process claims to build claimsByType object
+  claims?.forEach(claim => {
+    // Ensure the claim type exists in our record
+    if (!claimsByType[claim.claimType]) {
+      claimsByType[claim.claimType] = {
         pending: 0,
         approved: 0,
         rejected: 0
       };
     }
     
-    acc[claim.claimType][claim.status] += 1;
-    return acc;
-  }, {} as Record<string, { pending: number; approved: number; rejected: number }>) || {};
+    // Safely update the count for the specific status
+    if (claim.status === "pending") {
+      claimsByType[claim.claimType].pending += 1;
+    } else if (claim.status === "approved") {
+      claimsByType[claim.claimType].approved += 1;
+    } else if (claim.status === "rejected") {
+      claimsByType[claim.claimType].rejected += 1;
+    }
+  });
   
   // Transform claim types data for chart
   const chartData = Object.entries(claimsByType).map(([type, statuses]) => ({

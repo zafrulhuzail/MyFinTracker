@@ -516,7 +516,20 @@ async function initializeDatabase() {
   }
 }
 
+// Create and export the storage instance 
 export const storage = new DatabaseStorage();
 
-// Initialize the database
-initializeDatabase().catch(console.error);
+// Initialize the database (called when imported)
+try {
+  // Use a self-executing async function
+  (async () => {
+    try {
+      await initializeDatabase();
+      console.log("Database initialized successfully");
+    } catch (error) {
+      console.error("Database initialization error:", error);
+    }
+  })();
+} catch (error) {
+  console.error("Database setup error:", error);
+}
