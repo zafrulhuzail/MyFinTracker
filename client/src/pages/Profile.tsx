@@ -97,10 +97,10 @@ export default function Profile() {
   
   if (!user) {
     return (
-      <div className="flex flex-col h-screen overflow-hidden">
+      <div className="flex flex-col min-h-screen">
         <AppHeader title="Profile" />
         <div className="flex-1 flex items-center justify-center">
-          <Skeleton className="h-screen w-full" />
+          <Skeleton className="h-64 w-full max-w-4xl" />
         </div>
 
       </div>
@@ -108,11 +108,11 @@ export default function Profile() {
   }
   
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col min-h-screen">
       <AppHeader title="Profile" />
       
-      <div className="flex-1 overflow-auto pb-16">
-        <div className="px-4 py-6">
+      <div className="flex-1">
+        <div className="px-4 py-6 container mx-auto max-w-4xl">
           {/* User Header */}
           <div className="mb-6">
             <div className="flex items-center">
