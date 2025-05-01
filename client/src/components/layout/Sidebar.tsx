@@ -52,7 +52,11 @@ export default function Sidebar() {
     <>
       {/* Mobile Header */}
       <div className="lg:hidden bg-white border-b border-gray-200 p-4 sticky top-0 z-30 flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-primary">MARA Claim System</h1>
+        <h1 className="text-xl font-semibold">
+          <span className="text-primary">MARA</span>
+          <span className="text-teal-500">Nexus</span>
+          <span className="text-slate-700"> Scholar</span>
+        </h1>
         <Button 
           variant="ghost" 
           size="icon" 
@@ -79,7 +83,11 @@ export default function Sidebar() {
       >
         {/* Logo/Brand */}
         <div className="hidden lg:flex h-16 items-center border-b border-gray-200 px-6">
-          <h1 className="text-xl font-semibold text-primary">MARA Claim System</h1>
+          <h1 className="text-xl font-semibold">
+            <span className="text-primary">MARA</span>
+            <span className="text-teal-500">Nexus</span>
+            <span className="text-slate-700"> Scholar</span>
+          </h1>
         </div>
         
         {/* User info */}

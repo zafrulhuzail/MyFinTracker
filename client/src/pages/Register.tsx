@@ -21,7 +21,11 @@ export default function Register() {
           <div className="w-full max-w-lg space-y-6">
             <div className="flex items-center justify-center gap-2 mb-8">
               <GraduationCap className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold">MARA Claim System</h1>
+              <h1 className="text-2xl font-bold">
+                <span className="text-primary">MARA</span>
+                <span className="text-teal-500">Nexus</span>
+                <span className="text-slate-700"> Scholar</span>
+              </h1>
             </div>
             <h2 className="text-2xl font-bold text-center mb-6">Create Your Account</h2>
             <RegisterForm />
@@ -32,9 +36,9 @@ export default function Register() {
       {/* Right side - Info section */}
       <div className="hidden lg:flex flex-1 bg-primary text-white">
         <div className="flex flex-col justify-center p-12 max-w-lg mx-auto">
-          <h2 className="text-3xl font-bold mb-6">Join the MARA Community</h2>
+          <h2 className="text-3xl font-bold mb-6">Join the MARA Scholar Community</h2>
           <p className="text-lg mb-8">
-            Register to access the MARA Student Allowance Claim System and manage your educational funding with ease.
+            Register to access <span className="font-bold">MARANexus Scholar</span> and manage your educational funding and academic progress with ease.
           </p>
           
           <div className="space-y-6">
