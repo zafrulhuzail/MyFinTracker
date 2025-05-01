@@ -403,6 +403,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // File upload endpoint
+  apiRouter.post("/upload", authenticateUser, upload.single('file'), (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // Return the file URL that can be used to access the file
+      const fileUrl = getFileUrl(req.file.filename);
+      
+      return res.status(201).json({
+        fileName: req.file.originalname,
+        fileUrl: fileUrl,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype
+      });
+    } catch (error) {
+      console.error("File upload error:", error);
+      return res.status(500).json({ 
+        message: "Error uploading file", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
   // Mount API routes
   app.use("/api", apiRouter);
   
