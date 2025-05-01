@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card } from '@/components/ui/card';
+
 
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -36,9 +36,11 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
 
   if (!fileUrl) {
     return (
-      <Card className="flex items-center justify-center h-80 w-full">
-        <p className="text-gray-500">No document provided</p>
-      </Card>
+      <div className="flex flex-col w-full h-full">
+        <div className="flex items-center justify-center h-full min-h-[300px] w-full border rounded-md p-4 bg-gray-50 mb-4">
+          <p className="text-gray-500">No document provided</p>
+        </div>
+      </div>
     );
   }
 
