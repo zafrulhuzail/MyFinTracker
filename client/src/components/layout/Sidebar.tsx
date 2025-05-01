@@ -8,7 +8,8 @@ import {
   User, 
   LayoutDashboard,
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -115,14 +116,20 @@ export default function Sidebar() {
                 active={location === "/admin"}
               />
               <NavItem
-                to="/history"
-                label="Claims"
+                to="/admin/students"
+                label="Student Directory"
+                icon={<Users size={20} />}
+                active={location === "/admin/students"}
+              />
+              <NavItem
+                to="/admin/claims"
+                label="Claims Management"
                 icon={<History size={20} />}
-                active={location === "/history"}
+                active={location === "/admin/claims"}
               />
               <NavItem
                 to="/profile"
-                label="Profile"
+                label="Settings"
                 icon={<User size={20} />}
                 active={location === "/profile"}
               />

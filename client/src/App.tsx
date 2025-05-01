@@ -31,16 +31,31 @@ function ProtectedRoutes() {
     return null;
   }
   
+  const { isAdmin } = useAuth();
+
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/new-claim" component={NewClaim} />
-        <Route path="/history" component={ClaimHistory} />
-        <Route path="/grades" component={Grades} />
-        <Route path="/profile" component={Profile} />
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/claims/:id" component={ClaimDetails} />
+        {isAdmin ? (
+          // Admin Routes
+          <>
+            <Route path="/admin" component={AdminDashboard} />
+            <Route path="/admin/students" component={() => <div>Student Directory - Coming Soon</div>} />
+            <Route path="/admin/claims" component={ClaimHistory} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/" component={AdminDashboard} />
+          </>
+        ) : (
+          // Student Routes
+          <>
+            <Route path="/" component={Home} />
+            <Route path="/new-claim" component={NewClaim} />
+            <Route path="/history" component={ClaimHistory} />
+            <Route path="/grades" component={Grades} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/claims/:id" component={ClaimDetails} />
+          </>
+        )}
         <Route component={NotFound} />
       </Switch>
     </Layout>
