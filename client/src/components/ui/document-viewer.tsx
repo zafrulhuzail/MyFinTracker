@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw, Download } from 'lucide-react';
+import { FileText, ZoomIn, ZoomOut, RotateCw, Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-
-// Initialize PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface DocumentViewerProps {
   fileUrl: string;
@@ -108,29 +104,47 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
     );
   }
 
+  // Use a simple approach for document viewing
+  useEffect(() => {
+    setLoading(false);
+  }, [fileUrl]);
+
   return (
     <div className="flex flex-col w-full h-full">
-      <div className="flex justify-center w-full mb-4 border rounded-md p-4 bg-gray-50 flex-1 overflow-auto">
-        {loading && (
+      <div className="flex flex-col justify-center items-center w-full mb-4 border rounded-md p-4 bg-gray-50 overflow-auto min-h-[300px]">
+        {loading ? (
           <div className="flex items-center justify-center w-full h-full min-h-[300px]">
             <Skeleton className="w-full h-full" />
           </div>
-        )}
-        
-        {isPdf ? (
-          <Document
-            file={finalFileUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={<Skeleton className="w-full h-full min-h-[300px]" />}
-          >
-            <Page 
-              pageNumber={pageNumber} 
-              scale={scale}
-              rotate={rotation}
-              loading={<Skeleton className="w-full h-full min-h-[300px]" />}
-            />
-          </Document>
+        ) : isPdf ? (
+          <div className="flex flex-col items-center justify-center gap-4">
+            <FileText className="h-16 w-16 text-gray-400" />
+            <p className="text-xl font-medium">PDF Document</p>
+            <p className="text-gray-500 text-sm mb-2">
+              PDF preview is not available. You can open or download the document using the buttons below.
+            </p>
+            <div className="flex gap-2">
+              <a 
+                href={finalFileUrl} 
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open in Browser
+                </Button>
+              </a>
+              <a 
+                href={finalFileUrl} 
+                download
+              >
+                <Button>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </a>
+            </div>
+          </div>
         ) : isImage ? (
           <div className="flex items-center justify-center h-full">
             <img 
@@ -142,83 +156,66 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
                 transition: 'transform 0.2s ease'
               }}
               className="max-h-[65vh] object-contain" 
-              onLoad={() => {
-                console.log("DocumentViewer - Image loaded successfully");
-                setLoading(false);
-              }}
+              onLoad={() => setLoading(false)}
               onError={(e) => {
                 console.error("DocumentViewer - Image load error:", e);
                 setError('Failed to load image');
-                setLoading(false);
               }}
             />
           </div>
         ) : (
-          <div className="flex items-center justify-center h-80 w-full">
-            <p className="text-gray-500">
-              This file type cannot be previewed. Please download to view.
+          <div className="flex flex-col items-center justify-center gap-4">
+            <FileText className="h-16 w-16 text-gray-400" />
+            <p className="text-xl font-medium">Document</p>
+            <p className="text-gray-500 text-sm mb-2">
+              This file type cannot be previewed. You can download the document using the button below.
             </p>
+            <a 
+              href={finalFileUrl} 
+              download
+            >
+              <Button>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            </a>
           </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={zoomOut}
-            disabled={scale <= 0.5}
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={zoomIn}
-            disabled={scale >= 3}
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={rotate}>
-            <RotateCw className="h-4 w-4" />
-          </Button>
-          <a 
-            href={finalFileUrl} 
-            download 
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4" />
+      {isImage && (
+        <div className="flex justify-between items-center">
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={zoomOut}
+              disabled={scale <= 0.5}
+            >
+              <ZoomOut className="h-4 w-4" />
             </Button>
-          </a>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={zoomIn}
+              disabled={scale >= 3}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={rotate}>
+              <RotateCw className="h-4 w-4" />
+            </Button>
+            <a 
+              href={finalFileUrl} 
+              download 
+            >
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4" />
+              </Button>
+            </a>
+          </div>
         </div>
-
-        {isPdf && numPages && (
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={previousPage}
-              disabled={pageNumber <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm">
-              Page {pageNumber} of {numPages}
-            </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={nextPage}
-              disabled={!numPages || pageNumber >= numPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
