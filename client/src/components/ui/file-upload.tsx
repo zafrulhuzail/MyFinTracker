@@ -60,14 +60,18 @@ export function FileUpload({
     }, 200);
 
     try {
+      console.log('Starting file upload for:', file.name);
       const formData = new FormData();
       formData.append('file', file);
 
+      console.log('Sending file to server...');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
         credentials: 'include'
       });
+      
+      console.log('Server response status:', response.status);
 
       clearInterval(progressInterval);
 
@@ -92,9 +96,16 @@ export function FileUpload({
     } catch (error) {
       clearInterval(progressInterval);
       setUploadStatus('error');
+      console.error('File upload error:', error);
+      
+      let errorMessage = 'Something went wrong';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

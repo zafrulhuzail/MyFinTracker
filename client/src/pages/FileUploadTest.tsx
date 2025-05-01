@@ -8,6 +8,7 @@ export default function FileUploadTest() {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleUploadComplete = (fileData: FileUploadResponse) => {
+    console.log('Upload complete. File data:', fileData);
     setUploadedFile(fileData);
   };
 
