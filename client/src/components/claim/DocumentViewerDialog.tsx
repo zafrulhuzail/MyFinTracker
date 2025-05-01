@@ -2,8 +2,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-  DialogDescription
+  DialogTitle
 } from "@/components/ui/dialog";
 import { DocumentViewer } from "@/components/ui/document-viewer";
 import { Button } from "@/components/ui/button";
@@ -26,15 +25,17 @@ export function DocumentViewerDialog({
 }: DocumentViewerDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full">
+      <DialogContent className="max-w-5xl w-[95vw] h-[85vh] max-h-[800px] flex flex-col">
         <DialogHeader className="pb-4">
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
+          <div className="text-sm text-muted-foreground mt-1">
             {fileName}
-          </DialogDescription>
+          </div>
         </DialogHeader>
         
-        <DocumentViewer fileUrl={fileUrl} />
+        <div className="flex-1 overflow-hidden">
+          <DocumentViewer fileUrl={fileUrl} />
+        </div>
         
         <div className="flex justify-end mt-4">
           <Button asChild variant="outline" className="flex items-center gap-1">

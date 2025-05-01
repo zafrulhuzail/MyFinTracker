@@ -77,17 +77,19 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
 
   if (error) {
     return (
-      <Card className="flex items-center justify-center h-80 w-full">
-        <p className="text-error">{error}</p>
-      </Card>
+      <div className="flex flex-col w-full h-full">
+        <div className="flex items-center justify-center h-full min-h-[300px] w-full border rounded-md p-4 bg-gray-50 mb-4">
+          <p className="text-red-500 font-medium">{error}</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex justify-center w-full mb-4 border rounded-md p-4 bg-gray-50 min-h-[400px]">
+    <div className="flex flex-col w-full h-full">
+      <div className="flex justify-center w-full mb-4 border rounded-md p-4 bg-gray-50 flex-1 overflow-auto">
         {loading && (
-          <div className="flex items-center justify-center w-full h-80">
+          <div className="flex items-center justify-center w-full h-full min-h-[300px]">
             <Skeleton className="w-full h-full" />
           </div>
         )}
@@ -97,17 +99,17 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
             file={fileUrl}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
-            loading={<Skeleton className="w-full h-80" />}
+            loading={<Skeleton className="w-full h-full min-h-[300px]" />}
           >
             <Page 
               pageNumber={pageNumber} 
               scale={scale}
               rotate={rotation}
-              loading={<Skeleton className="w-full h-80" />}
+              loading={<Skeleton className="w-full h-full min-h-[300px]" />}
             />
           </Document>
         ) : isImage ? (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center h-full">
             <img 
               src={fileUrl} 
               alt="Document preview" 
@@ -116,7 +118,7 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
                 maxWidth: '100%',
                 transition: 'transform 0.2s ease'
               }}
-              className="max-h-[60vh]" 
+              className="max-h-[65vh] object-contain" 
               onLoad={() => setLoading(false)}
               onError={() => {
                 setError('Failed to load image');
