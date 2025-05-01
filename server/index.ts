@@ -74,10 +74,14 @@ app.use((req, res, next) => {
         currentAddress: "MARA HQ",
         countryOfStudy: "Malaysia",
         university: "MARA Administration",
-        studyProgram: "Administration",
-        courseLevel: "N/A",
-        startDate: new Date().toISOString(),
-        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString(),
+        fieldOfStudy: "Administration",
+        degreeLevel: "N/A",
+        maraGroup: "Administrative",
+        sponsorshipPeriod: "2023-2028",
+        bankName: "MARA Bank",
+        bankAddress: "MARA HQ, Kuala Lumpur",
+        accountNumber: "ADMIN-ACCOUNT-001",
+        swiftCode: "MARABANKXXX",
         role: "admin"
       });
       console.log("Admin user created:", adminUser.id);
