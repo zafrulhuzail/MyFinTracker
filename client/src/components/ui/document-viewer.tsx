@@ -22,18 +22,24 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
   
   console.log("DocumentViewer - Original File URL:", fileUrl);
   
-  // Clean up file:// URLs (convert to a relative path instead)
+  // Prepare file URL for proper access
   const cleanFileUrl = fileUrl.startsWith('file://') 
-    ? `/uploads/${fileUrl.replace('file://', '')}`  // Assume files are in /uploads directory
+    ? fileUrl.replace('file://', '/')  // Convert file:// protocol to relative path
     : fileUrl;
+  
+  // If path already starts with /uploads, use it directly
+  // Otherwise, if it's a relative path without a leading slash, add the leading slash
+  const finalFileUrl = cleanFileUrl.startsWith('/uploads') 
+    ? cleanFileUrl 
+    : (cleanFileUrl.startsWith('/') ? cleanFileUrl : `/${cleanFileUrl}`);
     
-  console.log("DocumentViewer - Cleaned File URL:", cleanFileUrl);
-  console.log("DocumentViewer - Is empty URL:", !cleanFileUrl);
+  console.log("DocumentViewer - Final File URL:", finalFileUrl);
+  console.log("DocumentViewer - Is empty URL:", !finalFileUrl);
   console.log("DocumentViewer - File type:", mimeType);
   
-  const isPdf = mimeType?.includes('pdf') || cleanFileUrl.toLowerCase().endsWith('.pdf');
+  const isPdf = mimeType?.includes('pdf') || finalFileUrl.toLowerCase().endsWith('.pdf');
   const isImage = mimeType?.includes('image') || 
-    /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(cleanFileUrl);
+    /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(finalFileUrl);
     
   console.log("DocumentViewer - isPdf:", isPdf);
   console.log("DocumentViewer - isImage:", isImage);

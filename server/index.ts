@@ -4,10 +4,14 @@ import { setupVite, serveStatic, log } from "./vite";
 import session from "express-session";
 import { pool } from "./db";
 import connectPgSimple from "connect-pg-simple";
+import path from "path";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve static files from /public/uploads directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 
 // Set up session middleware with PostgreSQL storage
 const PgSession = connectPgSimple(session);
