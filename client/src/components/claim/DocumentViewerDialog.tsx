@@ -1,15 +1,7 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from "@/components/ui/dialog";
-import { DocumentViewer } from "@/components/ui/document-viewer";
-import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, FileText } from "lucide-react";
-import { useState, useEffect } from "react";
-// Using iframe approach for PDF viewing instead of PDF.js library
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ExternalLink, Download, FileText } from 'lucide-react';
 
 interface DocumentViewerDialogProps {
   isOpen: boolean;
@@ -26,51 +18,23 @@ export function DocumentViewerDialog({
   fileName,
   title
 }: DocumentViewerDialogProps) {
-  const [finalUrl, setFinalUrl] = useState("");
+  const [fullUrl, setFullUrl] = useState("");
   const [isPdf, setIsPdf] = useState(false);
   const [isImage, setIsImage] = useState(false);
   
   useEffect(() => {
-    // Normalize file URL based on different possible formats
-    let normalizedUrl = fileUrl;
+    // Create a clean, browser-friendly URL by ensuring all paths start with /uploads/
+    let processedUrl = fileUrl;
     
-    // Handle case when file URL is empty or undefined
-    if (!fileUrl) {
-      normalizedUrl = '';
-      console.log('Empty file URL provided');
-    }
-    // Handle already normalized paths (starts with /uploads/)
-    else if (fileUrl.startsWith('/uploads/')) {
-      normalizedUrl = fileUrl;
-    }
-    // Handle file:// protocol (old format)
-    else if (fileUrl.startsWith('file://')) {
-      const filename = fileUrl.replace('file://', '');
-      normalizedUrl = `/uploads/${filename}`;
-    } 
-    // Handle raw filenames (most common case from claims)
-    else if (!fileUrl.startsWith('/') && !fileUrl.startsWith('http')) {
-      // If it's a raw filename (like "Transcript-Stolen-Bike.pdf" or "Final Result.pdf"),
-      // prefix it with the uploads path
-      normalizedUrl = `/uploads/${fileUrl}`;
+    // If it's not already a full path, add the /uploads/ prefix
+    if (!fileUrl.startsWith('/uploads/') && !fileUrl.startsWith('http')) {
+      processedUrl = `/uploads/${fileUrl}`;
     }
     
-    // Logging for debugging
-    console.log('Document viewer - Original URL:', fileUrl);
-    console.log('Document viewer - Normalized URL:', normalizedUrl);
+    // Set the full URL for viewing
+    setFullUrl(processedUrl);
     
-    // Encode spaces and special characters in the URL path
-    // Don't encode full URL since /uploads/ should remain as is
-    if (normalizedUrl.startsWith('/uploads/')) {
-      const pathParts = normalizedUrl.split('/uploads/');
-      const encodedFilename = encodeURIComponent(pathParts[1]);
-      normalizedUrl = `/uploads/${encodedFilename}`;
-      console.log('Document viewer - URL encoded:', normalizedUrl);
-    }
-    
-    setFinalUrl(normalizedUrl);
-    
-    // Check file type
+    // Determine file type from extension
     const lowerFileName = fileName.toLowerCase();
     setIsPdf(lowerFileName.endsWith('.pdf'));
     setIsImage(
@@ -80,142 +44,92 @@ export function DocumentViewerDialog({
       lowerFileName.endsWith('.gif') || 
       lowerFileName.endsWith('.webp')
     );
+    
+    // Debug log
+    console.log('Document viewer: ', { fileUrl, processedUrl, fileName, isPdf: lowerFileName.endsWith('.pdf') });
   }, [fileUrl, fileName]);
 
-  // Debug information
-  useEffect(() => {
-    console.log('Document viewer debug info:');
-    console.log(' - Original URL:', fileUrl);
-    console.log(' - Final URL:', finalUrl);
-    console.log(' - File Name:', fileName);
-    console.log(' - Is PDF:', isPdf);
-  }, [fileUrl, finalUrl, fileName, isPdf]);
+  // Function to open document in a new tab
+  const openInNewTab = () => {
+    window.open(fullUrl, '_blank');
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[85vh] max-h-[800px] flex flex-col">
-        <DialogHeader className="pb-4">
+      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] max-h-[800px] flex flex-col">
+        <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground mt-1">
-            {fileName}
-          </DialogDescription>
+          <DialogDescription>{fileName}</DialogDescription>
         </DialogHeader>
         
         <div className="flex-1 overflow-auto border rounded-md bg-gray-50 p-4">
-          {isImage ? (
-            <div className="flex items-center justify-center h-full">
-              <img 
-                src={finalUrl} 
-                alt={fileName} 
-                className="max-h-[65vh] object-contain"
-                onError={(e) => {
-                  console.error('Image failed to load:', finalUrl);
-                  e.currentTarget.onerror = null; 
-                  e.currentTarget.style.display = 'none';
-                  // Show error message
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'text-center p-4 text-destructive';
-                    errorDiv.innerHTML = `
-                      <p class="font-medium mb-2">Error loading image</p>
-                      <p class="text-sm">The image could not be loaded. Please try the download button below.</p>
-                    `;
-                    parent.appendChild(errorDiv);
-                  }
-                }}
-              />
-            </div>
-          ) : isPdf ? (
-            <div className="flex flex-col h-full">
-              {/* Simple PDF icon and direct message for better UX */}
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center h-full">
-                <div className="bg-gray-50 rounded-full p-6 mb-6">
-                  <FileText className="h-16 w-16 text-primary" />
-                </div>
-                <h3 className="text-xl font-medium mb-3">PDF Document</h3>
-                <p className="text-muted-foreground mb-8 max-w-md">
-                  Due to browser security restrictions, PDFs need to be viewed directly.
-                  Use one of the options below to view this document.
-                </p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
-                  <Button 
-                    variant="default" 
-                    className="w-full py-6"
-                    onClick={() => {
-                      // Properly encode the URL to handle spaces and special characters
-                      const encodedUrl = encodeURI(finalUrl);
-                      console.log('Opening URL:', encodedUrl);
-                      const newTab = window.open(encodedUrl, '_blank');
-                      if (!newTab) {
-                        alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
-                      }
-                    }}
-                  >
-                    <ExternalLink className="h-5 w-5 mr-3" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">View Document</span>
-                      <span className="text-xs opacity-80">Opens in new tab</span>
-                    </div>
-                  </Button>
-                  <a 
-                    href={encodeURI(finalUrl)} 
-                    download={fileName}
-                    className="w-full"
-                  >
-                    <Button variant="outline" className="w-full py-6">
-                      <Download className="h-5 w-5 mr-3" />
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">Download</span>
-                        <span className="text-xs opacity-80">{(fileName.length > 15) ? `${fileName.substring(0, 15)}...` : fileName}</span>
-                      </div>
-                    </Button>
-                  </a>
-                </div>
-                
-                <div className="mt-8 text-sm text-muted-foreground">
-                  <p>File: {fileName}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-4 h-full">
-              <FileText className="h-16 w-16 text-gray-400" />
-              <h3 className="text-xl font-medium">Document</h3>
-              <p className="text-gray-500 text-sm text-center max-w-md">
-                This file type cannot be previewed. You can download the document using the button below.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full sm:w-auto"
-                  onClick={() => {
-                    // Properly encode the URL to handle spaces and special characters
-                    const encodedUrl = encodeURI(finalUrl);
-                    console.log('Opening URL:', encodedUrl);
-                    const newTab = window.open(encodedUrl, '_blank');
-                    if (!newTab) {
-                      alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
-                    }
-                  }}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Open in Browser
-                </Button>
-                <a 
-                  href={encodeURI(finalUrl)} 
-                  download={fileName}
-                >
-                  <Button className="w-full sm:w-auto">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
-                </a>
+          {isPdf ? (
+            <div className="flex flex-col items-center justify-center h-full gap-6">
+              <div className="bg-primary/10 rounded-full p-6">
+                <FileText className="h-16 w-16 text-primary" />
               </div>
               
-              <div className="mt-4 text-sm text-muted-foreground">
-                <p>URL: {finalUrl}</p>
+              <div className="text-center max-w-lg">
+                <h3 className="text-xl font-medium mb-2">PDF Document</h3>
+                <p className="text-muted-foreground mb-6">
+                  This document will open in a new browser tab for better viewing.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  size="lg" 
+                  onClick={openInNewTab}
+                >
+                  <ExternalLink className="mr-2 h-5 w-5" />
+                  Open Document
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="lg"
+                  asChild
+                >
+                  <a href={fullUrl} download={fileName}>
+                    <Download className="mr-2 h-5 w-5" />
+                    Download
+                  </a>
+                </Button>
+              </div>
+            </div>
+          ) : isImage ? (
+            <div className="flex items-center justify-center h-full">
+              <img 
+                src={fullUrl} 
+                alt={fileName} 
+                className="max-h-[600px] object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-6">
+              <FileText className="h-16 w-16 text-gray-400" />
+              <div className="text-center">
+                <h3 className="text-xl font-medium mb-2">Unknown File Type</h3>
+                <p className="text-muted-foreground mb-6">
+                  This file cannot be previewed directly in the browser.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  variant="outline"
+                  onClick={openInNewTab}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Open in Browser
+                </Button>
+                
+                <Button asChild>
+                  <a href={fullUrl} download={fileName}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </a>
+                </Button>
               </div>
             </div>
           )}
