@@ -410,6 +410,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
       
+      // Log uploaded file details for debugging
+      console.log("File uploaded successfully:", {
+        originalName: req.file.originalname,
+        filename: req.file.filename,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        path: req.file.path
+      });
+      
       // Return the file URL that can be used to access the file
       const fileUrl = getFileUrl(req.file.filename);
       

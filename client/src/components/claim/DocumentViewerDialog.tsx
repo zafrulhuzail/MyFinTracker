@@ -80,6 +80,22 @@ export function DocumentViewerDialog({
                 src={finalUrl} 
                 alt={fileName} 
                 className="max-h-[65vh] object-contain"
+                onError={(e) => {
+                  console.error('Image failed to load:', finalUrl);
+                  e.currentTarget.onerror = null; 
+                  e.currentTarget.style.display = 'none';
+                  // Show error message
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'text-center p-4 text-destructive';
+                    errorDiv.innerHTML = `
+                      <p class="font-medium mb-2">Error loading image</p>
+                      <p class="text-sm">The image could not be loaded. Please try the download button below.</p>
+                    `;
+                    parent.appendChild(errorDiv);
+                  }
+                }}
               />
             </div>
           ) : (
@@ -93,13 +109,13 @@ export function DocumentViewerDialog({
                   ? "PDF preview is not available. You can open or download the document using the buttons below." 
                   : "This file type cannot be previewed. You can download the document using the button below."}
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <a 
                   href={finalUrl} 
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button variant="outline">
+                  <Button variant="outline" className="w-full sm:w-auto">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open in Browser
                   </Button>
@@ -108,11 +124,15 @@ export function DocumentViewerDialog({
                   href={finalUrl} 
                   download={fileName}
                 >
-                  <Button>
+                  <Button className="w-full sm:w-auto">
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </Button>
                 </a>
+              </div>
+              
+              <div className="mt-4 text-sm text-muted-foreground">
+                <p>URL: {finalUrl}</p>
               </div>
             </div>
           )}
