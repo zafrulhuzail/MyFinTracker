@@ -7,6 +7,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import SemesterAccordion from "@/components/grade/SemesterAccordion";
 import CourseForm from "@/components/grade/CourseForm";
 import StudyPlanTable from "@/components/grade/StudyPlanTable";
+import StudyPlanForm from "@/components/grade/StudyPlanForm";
 import DocumentUploader from "@/components/grade/DocumentUploader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -118,9 +119,42 @@ export default function Grades() {
     },
   });
   
+  // Mutation for adding a new study plan
+  const addStudyPlanMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/study-plans", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Study plan created",
+        description: "Your study plan has been added successfully",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/api/study-plans"] });
+      
+      // Close dialog
+      setIsAddingStudyPlan(false);
+      setSelectedStudyPlan(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to add study plan",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+  
   const handleAddCourse = (academicRecord: AcademicRecord) => {
     setSelectedAcademicRecord(academicRecord);
     setIsAddingCourse(true);
+  };
+  
+  const handleAddStudyPlan = () => {
+    setSelectedStudyPlan(null);
+    setIsAddingStudyPlan(true);
   };
   
   return (
@@ -222,7 +256,16 @@ export default function Grades() {
           
           {/* Study Plan Section */}
           <div>
-            <h3 className="text-lg font-medium mb-3">Study Plan</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium">Study Plan</h3>
+              <Button
+                onClick={handleAddStudyPlan}
+                size="sm"
+                variant={studyPlans.length > 0 ? "outline" : "default"}
+              >
+                Add Semester Plan
+              </Button>
+            </div>
             <Card className="p-4">
               {isLoadingPlans ? (
                 <Skeleton className="h-32 w-full" />
@@ -231,6 +274,9 @@ export default function Grades() {
               ) : (
                 <div className="text-center py-4">
                   <p className="text-gray-500">No study plan defined yet</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Create a study plan to track your future semesters and courses
+                  </p>
                 </div>
               )}
             </Card>
@@ -336,6 +382,32 @@ export default function Grades() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Study Plan Dialog */}
+      <Dialog open={isAddingStudyPlan} onOpenChange={setIsAddingStudyPlan}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedStudyPlan ? "Edit Study Plan" : "Add New Study Plan"}
+            </DialogTitle>
+            <DialogDescription>
+              Define your future semester plan including planned courses and credits
+            </DialogDescription>
+          </DialogHeader>
+          
+          <StudyPlanForm
+            onSubmit={(data) => {
+              // Ensure the userId is set for new plans
+              if (!selectedStudyPlan && user) {
+                data.userId = user.id;
+              }
+              addStudyPlanMutation.mutate(data);
+            }}
+            isLoading={addStudyPlanMutation.isPending}
+            existingPlan={selectedStudyPlan || undefined}
+          />
         </DialogContent>
       </Dialog>
 

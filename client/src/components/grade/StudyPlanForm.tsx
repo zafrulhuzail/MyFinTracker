@@ -35,7 +35,13 @@ const studyPlanFormSchema = insertStudyPlanSchema.extend({
 });
 
 // Define form type
-type StudyPlanFormValues = z.infer<typeof studyPlanFormSchema>;
+type StudyPlanFormValues = {
+  userId: number;
+  semester: "Winter" | "Summer";
+  year: string;
+  plannedCourses: string[];
+  totalCredits: number;
+};
 
 interface StudyPlanFormProps {
   onSubmit: (data: StudyPlanFormValues) => void;
