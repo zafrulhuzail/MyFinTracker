@@ -7,15 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { DocumentViewer } from "@/components/ui/document-viewer";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, FileText, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, ExternalLink, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
-
-// Set PDF.js worker path
-// Use CDN for worker file - this is more reliable than local file
-pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+// Using iframe approach for PDF viewing instead of PDF.js library
 
 interface DocumentViewerDialogProps {
   isOpen: boolean;
@@ -35,14 +29,6 @@ export function DocumentViewerDialog({
   const [finalUrl, setFinalUrl] = useState("");
   const [isPdf, setIsPdf] = useState(false);
   const [isImage, setIsImage] = useState(false);
-  
-  // PDF viewer state
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.0);
-  const [rotation, setRotation] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<Error | null>(null);
   
   useEffect(() => {
     // Normalize file URL based on different possible formats
@@ -115,109 +101,32 @@ export function DocumentViewerDialog({
             </div>
           ) : isPdf ? (
             <div className="flex flex-col h-full">
-              {/* PDF Viewer */}
-              <div className="flex-1 flex flex-col items-center overflow-auto">
-                <Document
-                  file={finalUrl}
-                  onLoadSuccess={({ numPages }) => {
-                    setNumPages(numPages);
-                    setIsLoading(false);
-                  }}
-                  onLoadError={(error) => {
-                    console.error('Error loading PDF:', error);
-                    setLoadError(error);
-                    setIsLoading(false);
-                  }}
-                  loading={
-                    <div className="flex items-center justify-center h-40">
-                      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                    </div>
-                  }
-                  error={
-                    <div className="text-center p-4 text-destructive">
-                      <p className="font-medium mb-2">Error loading PDF</p>
-                      <p className="text-sm">Could not load the PDF file. Please try the download button.</p>
-                    </div>
-                  }
-                >
-                  {!loadError && (
-                    <Page
-                      pageNumber={pageNumber}
-                      scale={scale}
-                      rotate={rotation}
-                      className="shadow-md"
-                      renderTextLayer={true}
-                      renderAnnotationLayer={true}
-                    />
-                  )}
-                </Document>
+              {/* PDF Viewer using iframe for direct embedding */}
+              <div className="flex-1 relative">
+                <iframe 
+                  src={finalUrl}
+                  className="w-full h-full border rounded" 
+                  title="PDF Viewer" 
+                  style={{ minHeight: '500px' }}
+                />
               </div>
 
-              {/* PDF Controls */}
-              {!loadError && !isLoading && numPages && (
-                <div className="mt-4 border-t pt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm">
-                      Page {pageNumber} of {numPages}
-                    </div>
-                    <div className="flex gap-2">
-                      <a href={finalUrl} download={fileName}>
-                        <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      </a>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
-                      disabled={pageNumber <= 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
+              <div className="mt-4 border-t pt-4">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <a href={finalUrl} download={fileName}>
+                    <Button variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
                     </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
-                      disabled={pageNumber >= numPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
+                  </a>
+                  <a href={finalUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="default">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open in Full Screen
                     </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setScale(Math.max(0.5, scale - 0.2))}
-                      title="Zoom out"
-                    >
-                      <ZoomOut className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setScale(Math.min(2.5, scale + 0.2))}
-                      title="Zoom in"
-                    >
-                      <ZoomIn className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setRotation((rotation + 90) % 360)}
-                      title="Rotate"
-                    >
-                      <RotateCw className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </a>
                 </div>
-              )}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center gap-4 h-full">
