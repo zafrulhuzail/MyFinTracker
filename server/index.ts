@@ -20,6 +20,10 @@ app.use('/uploads', express.static(uploadsPath, {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.pdf')) {
       res.setHeader('Content-Type', 'application/pdf');
+      // Set content disposition for PDFs to improve embedding
+      res.setHeader('Content-Disposition', 'inline; filename=' + path.basename(filePath));
+      // Add headers needed for PDF embedding
+      res.setHeader('X-Content-Type-Options', 'nosniff');
     } else if (filePath.match(/\.(jpe?g)$/i)) {
       res.setHeader('Content-Type', 'image/jpeg');
     } else if (filePath.match(/\.(png)$/i)) {
@@ -27,6 +31,8 @@ app.use('/uploads', express.static(uploadsPath, {
     }
     // Enable CORS for file access
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   }
 }));
 

@@ -101,14 +101,23 @@ export function DocumentViewerDialog({
             </div>
           ) : isPdf ? (
             <div className="flex flex-col h-full">
-              {/* PDF Viewer using iframe for direct embedding */}
+              {/* PDF Viewer using object tag */}
               <div className="flex-1 relative">
-                <iframe 
-                  src={finalUrl}
-                  className="w-full h-full border rounded" 
-                  title="PDF Viewer" 
+                <object
+                  data={finalUrl}
+                  type="application/pdf"
+                  className="w-full h-full border rounded"
                   style={{ minHeight: '500px' }}
-                />
+                >
+                  <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+                    <FileText className="h-12 w-12 text-gray-400 mb-4" />
+                    <p className="font-medium mb-2">PDF cannot be displayed</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Your browser might be blocking the PDF from displaying.
+                      Please use the buttons below.
+                    </p>
+                  </div>
+                </object>
               </div>
 
               <div className="mt-4 border-t pt-4">
