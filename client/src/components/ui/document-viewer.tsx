@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -21,12 +20,27 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const isPdf = mimeType?.includes('pdf') || fileUrl.toLowerCase().endsWith('.pdf');
+  console.log("DocumentViewer - Original File URL:", fileUrl);
+  
+  // Clean up file:// URLs (convert to a relative path instead)
+  const cleanFileUrl = fileUrl.startsWith('file://') 
+    ? `/uploads/${fileUrl.replace('file://', '')}`  // Assume files are in /uploads directory
+    : fileUrl;
+    
+  console.log("DocumentViewer - Cleaned File URL:", cleanFileUrl);
+  console.log("DocumentViewer - Is empty URL:", !cleanFileUrl);
+  console.log("DocumentViewer - File type:", mimeType);
+  
+  const isPdf = mimeType?.includes('pdf') || cleanFileUrl.toLowerCase().endsWith('.pdf');
   const isImage = mimeType?.includes('image') || 
-    /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl);
+    /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(cleanFileUrl);
+    
+  console.log("DocumentViewer - isPdf:", isPdf);
+  console.log("DocumentViewer - isImage:", isImage);
 
   useEffect(() => {
     // Reset state when file changes
+    console.log("DocumentViewer - useEffect - fileUrl changed:", fileUrl);
     setLoading(true);
     setError(null);
     setPageNumber(1);
@@ -45,6 +59,7 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
   }
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    console.log("DocumentViewer - PDF loaded successfully, pages:", numPages);
     setNumPages(numPages);
     setLoading(false);
   };
@@ -98,7 +113,7 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
         
         {isPdf ? (
           <Document
-            file={fileUrl}
+            file={cleanFileUrl}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={<Skeleton className="w-full h-full min-h-[300px]" />}
@@ -113,7 +128,7 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
         ) : isImage ? (
           <div className="flex items-center justify-center h-full">
             <img 
-              src={fileUrl} 
+              src={cleanFileUrl} 
               alt="Document preview" 
               style={{ 
                 transform: `scale(${scale}) rotate(${rotation}deg)`,
@@ -121,8 +136,12 @@ export function DocumentViewer({ fileUrl, mimeType }: DocumentViewerProps) {
                 transition: 'transform 0.2s ease'
               }}
               className="max-h-[65vh] object-contain" 
-              onLoad={() => setLoading(false)}
-              onError={() => {
+              onLoad={() => {
+                console.log("DocumentViewer - Image loaded successfully");
+                setLoading(false);
+              }}
+              onError={(e) => {
+                console.error("DocumentViewer - Image load error:", e);
                 setError('Failed to load image');
                 setLoading(false);
               }}

@@ -32,6 +32,12 @@ export default function ClaimDetails() {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<{ url: string; name: string; title: string } | null>(null);
   
+  // Debug function for document viewing
+  const viewDocument = (document: { url: string; name: string; title: string }) => {
+    console.log("Viewing document:", document);
+    setViewingDocument(document);
+  };
+  
   // Fetch claim details
   const { data: claim, isLoading } = useQuery<Claim>({
     queryKey: [`/api/claims/${id}`],
