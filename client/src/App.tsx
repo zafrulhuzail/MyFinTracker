@@ -42,6 +42,7 @@ function ProtectedRoutes() {
             <Route path="/admin" component={AdminDashboard} />
             <Route path="/admin/students" component={StudentDirectory} />
             <Route path="/admin/claims" component={ClaimsManagement} />
+            <Route path="/claims/:id" component={ClaimDetails} />
             <Route path="/profile" component={Profile} />
             <Route path="/" component={AdminDashboard} />
           </>

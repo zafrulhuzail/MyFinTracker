@@ -4,6 +4,7 @@ import { Claim, User, updateClaimStatusSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
 import AppHeader from "@/components/layout/AppHeader";
 import {
   Card,
@@ -55,6 +56,7 @@ export default function ClaimsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   // Fetch claims data
@@ -247,13 +249,22 @@ export default function ClaimsManagement() {
                           <TableCell>{formatDate(claim.createdAt.toString())}</TableCell>
                           <TableCell>{getStatusBadge(claim.status)}</TableCell>
                           <TableCell>
-                            <Button 
-                              size="sm" 
-                              variant={claim.status === "pending" ? "default" : "outline"}
-                              onClick={() => handleReviewClaim(claim)}
-                            >
-                              Review
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant={claim.status === "pending" ? "default" : "outline"}
+                                onClick={() => handleReviewClaim(claim)}
+                              >
+                                Review
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setLocation(`/claims/${claim.id}`)}
+                              >
+                                View Details
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
