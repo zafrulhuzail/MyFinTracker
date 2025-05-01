@@ -49,17 +49,13 @@ export function DocumentViewerDialog({
     } 
     // Handle raw filenames (most common case from claims)
     else if (!fileUrl.startsWith('/') && !fileUrl.startsWith('http')) {
-      // Check if the file exists with a timestamp prefix
-      // Find the file in the uploads directory that ends with this filename
-      // For now, just append to /uploads/ path
+      // If it's a raw filename (like "Transcript-Stolen-Bike.pdf"),
+      // prefix it with the uploads path
       normalizedUrl = `/uploads/${fileUrl}`;
     }
     
-    console.log('Original URL:', fileUrl);
-    console.log('Normalized URL:', normalizedUrl);
-    
-    // Search for the file in the actual uploads directory
-    // This is handled server-side when the URL is accessed
+    console.log('Document viewer - Original URL:', fileUrl);
+    console.log('Document viewer - Normalized URL:', normalizedUrl);
     
     setFinalUrl(normalizedUrl);
     

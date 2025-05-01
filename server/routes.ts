@@ -13,7 +13,7 @@ import {
 } from "@shared/schema";
 import { sendEmail } from "./utils/email";
 import { authenticateUser, isAdmin } from "./middleware/auth";
-import { upload, getFileUrl } from "./utils/upload";
+import { upload, getFileUrl, findFileByName } from "./utils/upload";
 import "express-session";
 
 // Extend Express Request type to include session
@@ -419,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         path: req.file.path
       });
       
-      // Create the absolute file URL that can be used to access the file
+      // Create the file URL that can be used to access the file
       const fileUrl = getFileUrl(req.file.filename);
       
       // Get server base URL
@@ -433,15 +433,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return file information
       return res.status(201).json({
         fileName: req.file.originalname,
-        fileUrl: fileUrl, // Relative URL (/uploads/filename)
+        // For backward compatibility, return both the original filename 
+        // for display and the actual timestamped filename for storage
+        fileUrl: req.file.filename, // This is the actual timestamped filename
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
-        path: req.file.path
+        // Include the original name to display to the user
+        originalName: req.file.originalname,
+        // Include full relative URL for direct access
+        fullFileUrl: fileUrl
       });
     } catch (error) {
       console.error("File upload error:", error);
       return res.status(500).json({ 
         message: "Error uploading file", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
+  // Helper endpoint to find a file by its original name (without timestamp prefix)
+  apiRouter.get("/file-lookup/:filename", authenticateUser, (req: Request, res: Response) => {
+    try {
+      const { filename } = req.params;
+      if (!filename) {
+        return res.status(400).json({ message: "Filename is required" });
+      }
+      
+      // Try to find the file with our helper function
+      const foundFile = findFileByName(filename);
+      
+      if (!foundFile) {
+        return res.status(404).json({ 
+          message: "File not found", 
+          requestedFilename: filename 
+        });
+      }
+      
+      // Return the matched file info
+      return res.status(200).json({
+        fileName: filename,
+        fileUrl: `/uploads/${foundFile}`,
+        success: true
+      });
+    } catch (error) {
+      console.error("File lookup error:", error);
+      return res.status(500).json({ 
+        message: "Error looking up file", 
         error: error instanceof Error ? error.message : String(error) 
       });
     }
