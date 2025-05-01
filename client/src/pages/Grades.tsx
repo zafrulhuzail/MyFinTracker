@@ -52,8 +52,10 @@ export default function Grades() {
   const queryClient = useQueryClient();
   
   const [isAddingCourse, setIsAddingCourse] = useState(false);
+  const [isAddingStudyPlan, setIsAddingStudyPlan] = useState(false);
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [selectedAcademicRecord, setSelectedAcademicRecord] = useState<AcademicRecord | null>(null);
+  const [selectedStudyPlan, setSelectedStudyPlan] = useState<StudyPlan | null>(null);
   
   // Fetch academic records
   const { data: academicRecords = [], isLoading: isLoadingRecords } = useQuery<AcademicRecord[]>({
