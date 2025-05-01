@@ -151,9 +151,11 @@ export default function AdminDashboard() {
             
             <TabsContent value="overview" className="space-y-6 mt-4">
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                {isLoadingClaims ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {isLoadingClaims || isLoadingUsers ? (
                   <>
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
@@ -175,6 +177,16 @@ export default function AdminDashboard() {
                       title="Total Claims" 
                       value={totalClaims} 
                       color="text-primary"
+                    />
+                    <StatCard 
+                      title="Total Students" 
+                      value={totalStudents} 
+                      color="text-blue-600"
+                    />
+                    <StatCard 
+                      title="Universities" 
+                      value={totalUniversities} 
+                      color="text-purple-600"
                     />
                     <StatCard 
                       title="Pending Amount" 
@@ -218,54 +230,114 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
               
-              {/* Recent Claims Table */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Recent Claims</h3>
-                
-                <Card>
-                  {isLoadingClaims ? (
-                    <div className="p-4">
-                      <Skeleton className="h-64 w-full" />
-                    </div>
-                  ) : latestClaims && latestClaims.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {latestClaims.map((claim) => (
-                          <TableRow key={claim.id}>
-                            <TableCell>CL{claim.id.toString().padStart(4, '0')}</TableCell>
-                            <TableCell>{claim.claimType}</TableCell>
-                            <TableCell>€{claim.amount.toFixed(2)}</TableCell>
-                            <TableCell>
-                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                                claim.status === "approved" ? "bg-green-100 text-success" :
-                                claim.status === "rejected" ? "bg-red-100 text-error" :
-                                "bg-yellow-100 text-warning"
-                              }`}>
-                                {claim.status.charAt(0).toUpperCase() + claim.status.slice(1)}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(claim.createdAt).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
+              {/* Student Distribution Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Students by Country</h3>
+                  <Card>
+                    {isLoadingUsers ? (
+                      <div className="p-4">
+                        <Skeleton className="h-64 w-full" />
+                      </div>
+                    ) : topCountries.length > 0 ? (
+                      <div className="p-6">
+                        {topCountries.map(([country, count], index) => (
+                          <div key={country} className="mb-4">
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">{country}</span>
+                              <span className="text-gray-600">{count} students</span>
+                            </div>
+                            <div className="h-2.5 bg-gray-200 rounded-full">
+                              <div 
+                                className={`h-2.5 rounded-full ${
+                                  index === 0 ? 'bg-primary' : 
+                                  index === 1 ? 'bg-blue-500' : 'bg-purple-500'
+                                }`}
+                                style={{ 
+                                  width: `${(count / totalStudents) * 100}%` 
+                                }}
+                              ></div>
+                            </div>
+                          </div>
                         ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="p-6 text-center text-gray-500">
-                      No claims available
-                    </div>
-                  )}
-                </Card>
+                        
+                        {totalStudents > 0 && topCountries.reduce((acc, [_, count]) => acc + count, 0) < totalStudents && (
+                          <div className="mb-4">
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">Other Countries</span>
+                              <span className="text-gray-600">
+                                {totalStudents - topCountries.reduce((acc, [_, count]) => acc + count, 0)} students
+                              </span>
+                            </div>
+                            <div className="h-2.5 bg-gray-200 rounded-full">
+                              <div 
+                                className="h-2.5 rounded-full bg-gray-400"
+                                style={{ 
+                                  width: `${((totalStudents - topCountries.reduce((acc, [_, count]) => acc + count, 0)) / totalStudents) * 100}%` 
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-gray-500">
+                        <Flag size={48} className="mx-auto mb-4 text-gray-300" />
+                        <p>No student data available</p>
+                      </div>
+                    )}
+                  </Card>
+                </div>
+                
+                {/* Recent Claims Table */}
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Recent Claims</h3>
+                  
+                  <Card>
+                    {isLoadingClaims ? (
+                      <div className="p-4">
+                        <Skeleton className="h-64 w-full" />
+                      </div>
+                    ) : latestClaims && latestClaims.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>ID</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {latestClaims.map((claim) => (
+                            <TableRow key={claim.id}>
+                              <TableCell>CL{claim.id.toString().padStart(4, '0')}</TableCell>
+                              <TableCell>{claim.claimType}</TableCell>
+                              <TableCell>€{claim.amount.toFixed(2)}</TableCell>
+                              <TableCell>
+                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                                  claim.status === "approved" ? "bg-green-100 text-success" :
+                                  claim.status === "rejected" ? "bg-red-100 text-error" :
+                                  "bg-yellow-100 text-warning"
+                                }`}>
+                                  {claim.status.charAt(0).toUpperCase() + claim.status.slice(1)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                {new Date(claim.createdAt).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="p-6 text-center text-gray-500">
+                        No claims available
+                      </div>
+                    )}
+                  </Card>
+                </div>
               </div>
             </TabsContent>
             
