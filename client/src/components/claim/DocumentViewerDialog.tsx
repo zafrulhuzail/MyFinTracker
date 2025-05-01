@@ -101,39 +101,49 @@ export function DocumentViewerDialog({
             </div>
           ) : isPdf ? (
             <div className="flex flex-col h-full">
-              {/* PDF Viewer using object tag */}
-              <div className="flex-1 relative">
-                <object
-                  data={finalUrl}
-                  type="application/pdf"
-                  className="w-full h-full border rounded"
-                  style={{ minHeight: '500px' }}
-                >
-                  <div className="flex flex-col items-center justify-center p-8 text-center h-full">
-                    <FileText className="h-12 w-12 text-gray-400 mb-4" />
-                    <p className="font-medium mb-2">PDF cannot be displayed</p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Your browser might be blocking the PDF from displaying.
-                      Please use the buttons below.
-                    </p>
-                  </div>
-                </object>
-              </div>
-
-              <div className="mt-4 border-t pt-4">
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <a href={finalUrl} download={fileName}>
-                    <Button variant="outline">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
+              {/* Simple PDF icon and direct message for better UX */}
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center h-full">
+                <div className="bg-gray-50 rounded-full p-6 mb-6">
+                  <FileText className="h-16 w-16 text-primary" />
+                </div>
+                <h3 className="text-xl font-medium mb-3">PDF Document</h3>
+                <p className="text-muted-foreground mb-8 max-w-md">
+                  Due to browser security restrictions, PDFs need to be viewed directly.
+                  Use one of the options below to view this document.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
+                  <a 
+                    href={finalUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-full"
+                  >
+                    <Button variant="default" className="w-full py-6">
+                      <ExternalLink className="h-5 w-5 mr-3" />
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">View Document</span>
+                        <span className="text-xs opacity-80">Opens in new tab</span>
+                      </div>
                     </Button>
                   </a>
-                  <a href={finalUrl} target="_blank" rel="noopener noreferrer">
-                    <Button variant="default">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open in Full Screen
+                  <a 
+                    href={finalUrl} 
+                    download={fileName}
+                    className="w-full"
+                  >
+                    <Button variant="outline" className="w-full py-6">
+                      <Download className="h-5 w-5 mr-3" />
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">Download</span>
+                        <span className="text-xs opacity-80">{(fileName.length > 15) ? `${fileName.substring(0, 15)}...` : fileName}</span>
+                      </div>
                     </Button>
                   </a>
+                </div>
+                
+                <div className="mt-8 text-sm text-muted-foreground">
+                  <p>File: {fileName}</p>
                 </div>
               </div>
             </div>
