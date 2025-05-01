@@ -34,21 +34,32 @@ export function DocumentViewerDialog({
     // Normalize file URL based on different possible formats
     let normalizedUrl = fileUrl;
     
+    // Handle case when file URL is empty or undefined
+    if (!fileUrl) {
+      normalizedUrl = '';
+      console.log('Empty file URL provided');
+    }
+    // Handle already normalized paths (starts with /uploads/)
+    else if (fileUrl.startsWith('/uploads/')) {
+      normalizedUrl = fileUrl;
+    }
     // Handle file:// protocol (old format)
-    if (fileUrl.startsWith('file://')) {
+    else if (fileUrl.startsWith('file://')) {
       normalizedUrl = `/uploads/${fileUrl.replace('file://', '')}`;
     } 
-    // Handle relative paths that don't start with /
+    // Handle raw filenames (most common case from claims)
     else if (!fileUrl.startsWith('/') && !fileUrl.startsWith('http')) {
-      normalizedUrl = `/uploads/${fileUrl}`;
-    }
-    // Handle hackeruerdendacker.png direct filename
-    else if (!fileUrl.includes('/') && !fileUrl.startsWith('http')) {
+      // Check if the file exists with a timestamp prefix
+      // Find the file in the uploads directory that ends with this filename
+      // For now, just append to /uploads/ path
       normalizedUrl = `/uploads/${fileUrl}`;
     }
     
     console.log('Original URL:', fileUrl);
     console.log('Normalized URL:', normalizedUrl);
+    
+    // Search for the file in the actual uploads directory
+    // This is handled server-side when the URL is accessed
     
     setFinalUrl(normalizedUrl);
     
@@ -63,6 +74,15 @@ export function DocumentViewerDialog({
       lowerFileName.endsWith('.webp')
     );
   }, [fileUrl, fileName]);
+
+  // Debug information
+  useEffect(() => {
+    console.log('Document viewer debug info:');
+    console.log(' - Original URL:', fileUrl);
+    console.log(' - Final URL:', finalUrl);
+    console.log(' - File Name:', fileName);
+    console.log(' - Is PDF:', isPdf);
+  }, [fileUrl, finalUrl, fileName, isPdf]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -113,20 +133,22 @@ export function DocumentViewerDialog({
                 </p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
-                  <a 
-                    href={finalUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-full"
+                  <Button 
+                    variant="default" 
+                    className="w-full py-6"
+                    onClick={() => {
+                      const newTab = window.open(finalUrl, '_blank');
+                      if (!newTab) {
+                        alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
+                      }
+                    }}
                   >
-                    <Button variant="default" className="w-full py-6">
-                      <ExternalLink className="h-5 w-5 mr-3" />
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">View Document</span>
-                        <span className="text-xs opacity-80">Opens in new tab</span>
-                      </div>
-                    </Button>
-                  </a>
+                    <ExternalLink className="h-5 w-5 mr-3" />
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">View Document</span>
+                      <span className="text-xs opacity-80">Opens in new tab</span>
+                    </div>
+                  </Button>
                   <a 
                     href={finalUrl} 
                     download={fileName}
@@ -155,16 +177,19 @@ export function DocumentViewerDialog({
                 This file type cannot be previewed. You can download the document using the button below.
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
-                <a 
-                  href={finalUrl} 
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Button 
+                  variant="outline" 
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    const newTab = window.open(finalUrl, '_blank');
+                    if (!newTab) {
+                      alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
+                    }
+                  }}
                 >
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open in Browser
-                  </Button>
-                </a>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open in Browser
+                </Button>
                 <a 
                   href={finalUrl} 
                   download={fileName}
