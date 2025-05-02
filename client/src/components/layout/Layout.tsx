@@ -215,7 +215,7 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
         </div>
         
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-6">
           {children}
         </main>
       </div>
