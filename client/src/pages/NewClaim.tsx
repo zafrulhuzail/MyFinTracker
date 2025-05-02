@@ -4,7 +4,7 @@ import ClaimForm from "@/components/claim/ClaimForm";
 
 export default function NewClaim() {
   return (
-    <div>
+    <div className="w-full pb-8">
       <div className="px-4 py-6 container mx-auto max-w-4xl">
         <div className="mb-4">
           <h2 className="text-2xl font-bold">New Claim</h2>

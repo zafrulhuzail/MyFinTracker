@@ -81,12 +81,12 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const unreadNotifications = notifications?.filter(n => !n.isRead) || [];
   
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-50">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col pt-[64px] lg:pt-0">
+      <div className="flex-1 flex flex-col pt-[64px] lg:pt-0 overflow-hidden">
         {/* Top Header - visible only on desktop */}
-        <header className="bg-white border-b border-gray-200 h-16 shrink-0 flex items-center px-4 lg:px-6 z-20 hidden lg:flex">
+        <header className="bg-white border-b border-gray-200 h-16 flex-shrink-0 flex items-center px-4 lg:px-6 z-20 hidden lg:flex">
           <h1 className="text-lg lg:text-xl font-semibold">{title}</h1>
           
           <div className="ml-auto flex items-center gap-2 lg:gap-4">

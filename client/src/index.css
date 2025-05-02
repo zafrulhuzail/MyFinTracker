@@ -4,12 +4,29 @@
 
 /* Fix double scrollbar issue */
 html, body {
-  overflow-y: auto;
+  overflow: hidden;
   height: 100%;
 }
 
 body {
   overflow-x: hidden;
+}
+
+/* Ensure only one scrollable container */
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Make only the main content area scrollable */
+main {
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Remove any potential overflow from the App container */
+.flex-col, .flex-row {
+  overflow: visible;
 }
 
 :root {
