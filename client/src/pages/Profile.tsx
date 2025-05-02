@@ -369,7 +369,7 @@ export default function Profile() {
           <div className="mt-6 space-y-3">           
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full py-3 text-error flex items-center justify-center font-medium">
+                <Button variant="outline" className="w-full py-3 text-error flex items-center justify-center font-medium logout-button">
                   <span className="material-icons mr-2">logout</span> Sign Out
                 </Button>
               </AlertDialogTrigger>

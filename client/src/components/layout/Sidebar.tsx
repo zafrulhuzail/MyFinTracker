@@ -205,7 +205,7 @@ export default function Sidebar() {
         <div className="p-3 border-t border-gray-200 mt-auto">
           <Button 
             variant="outline" 
-            className="w-full justify-start text-gray-600"
+            className="w-full justify-center text-gray-600 logout-button"
             onClick={() => logout()}
           >
             Log Out

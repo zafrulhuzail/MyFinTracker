@@ -202,6 +202,20 @@ main, #main-content {
   transition: all 0.3s ease-in-out;
 }
 
+/* Fix logout button appearance */
+.logout-button {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 120px !important;
+  max-width: 100% !important;
+  justify-content: center !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  padding: 0.5rem 1rem !important;
+}
+
 /* Material Icons */
 .material-icons {
   font-family: 'Material Icons';
