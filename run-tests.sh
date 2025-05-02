@@ -11,22 +11,47 @@ run_test() {
 case "$1" in
   unit)
     echo "Running unit tests..."
-    run_test "npx vitest run tests/unit/claim-utils.test.ts"
+    run_test "npx vitest run tests/unit"
     ;;
   
   integration)
     echo "Running integration tests..."
-    run_test "npx vitest run tests/integration/claim-interaction.test.tsx"
+    run_test "npx vitest run tests/integration"
     ;;
   
   api)
     echo "Running API tests..."
-    run_test "npx vitest run tests/api/claims-api-test.ts"
+    run_test "npx vitest run tests/api"
     ;;
   
   e2e)
     echo "Running end-to-end tests..."
-    run_test "npx vitest run tests/e2e/claim-submission.test.tsx"
+    run_test "npx vitest run tests/e2e"
+    ;;
+  
+  claim-card)
+    echo "Running claim card tests..."
+    run_test "npx vitest run tests/unit/claim-card.test.tsx"
+    ;;
+
+  form-validation)
+    echo "Running form validation tests..."
+    run_test "npx vitest run tests/unit/form-validation.test.ts"
+    ;;
+
+  multi-claim)
+    echo "Running multi-claim tests..."
+    run_test "npx vitest run tests/integration/multi-claim-selection.test.tsx"
+    ;;
+
+  notifications)
+    echo "Running notification system tests..."
+    run_test "npx vitest run tests/integration/notification-system.test.tsx"
+    ;;
+
+  api-endpoints)
+    echo "Running API endpoints tests..."
+    run_test "npx vitest run tests/api/claims-endpoints.test.ts"
     ;;
   
   single)
