@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,14 +77,27 @@ export default function Grades() {
   const totalCredits = academicRecords.reduce((sum, record) => sum + (record.ectsCredits || 0), 0) || 0;
   
   // Get the current/latest semester
-  const currentRecord = academicRecords.length > 0 ? academicRecords.sort((a, b) => {
-    // Compare year first
-    const yearDiff = parseInt(b.year) - parseInt(a.year);
-    if (yearDiff !== 0) return yearDiff;
-    
-    // If same year, compare semester (Winter > Summer)
-    return a.semester === "Winter" ? 1 : -1;
-  })[0] : null;
+  const [currentRecord, setCurrentRecord] = useState<AcademicRecord | null>(null);
+  
+  // Find and set current semester on initial load
+  useEffect(() => {
+    if (academicRecords.length > 0) {
+      // Sort academic records by year and semester
+      const sortedRecords = [...academicRecords].sort((a, b) => {
+        // Compare year first
+        const yearDiff = parseInt(b.year) - parseInt(a.year);
+        if (yearDiff !== 0) return yearDiff;
+        
+        // If same year, compare semester (Winter > Summer)
+        return a.semester === "Winter" ? 1 : -1;
+      });
+      
+      // Use the most recent one by default
+      setCurrentRecord(sortedRecords[0]);
+    } else {
+      setCurrentRecord(null);
+    }
+  }, [academicRecords]);
   
   // Mutation for adding a new course
   const addCourseMutation = useMutation({
@@ -186,9 +199,30 @@ export default function Grades() {
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm">Current Semester</p>
-                  <p className="font-medium">
-                    {currentRecord ? `${currentRecord.semester} ${currentRecord.year}` : "N/A"}
-                  </p>
+                  {academicRecords.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <select 
+                        className="text-sm border rounded px-2 py-1"
+                        value={currentRecord?.id || ""}
+                        onChange={(e) => {
+                          const selectedId = parseInt(e.target.value);
+                          const record = academicRecords.find(r => r.id === selectedId);
+                          if (record) {
+                            setCurrentRecord(record);
+                          }
+                        }}
+                      >
+                        {academicRecords.map(record => (
+                          <option key={record.id} value={record.id}>
+                            {record.semester} {record.year}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-primary">(You can change this)</span>
+                    </div>
+                  ) : (
+                    <p className="font-medium">N/A</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm">Study Progress</p>

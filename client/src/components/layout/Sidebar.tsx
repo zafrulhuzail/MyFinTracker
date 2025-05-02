@@ -52,18 +52,21 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 p-4 sticky top-0 z-30 flex justify-between items-center">
-        <h1 className="text-xl font-semibold">
-          <span className="text-primary">My</span>
-          <span className="text-teal-500">Fin</span>
-          <span className="text-slate-700">Tracker</span>
-        </h1>
+      <div className="lg:hidden bg-white border-b border-gray-200 p-4 fixed top-0 left-0 right-0 z-30 flex justify-between items-center">
+        <Link to="/">
+          <h1 className="text-xl font-semibold">
+            <span className="text-primary">My</span>
+            <span className="text-teal-500">Fin</span>
+            <span className="text-slate-700">Tracker</span>
+          </h1>
+        </Link>
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="focus:outline-none"
         >
-          {mobileMenuOpen ? <X /> : <Menu />}
+          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
@@ -78,7 +81,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div 
         className={cn(
-          "bg-white border-r border-gray-200 w-64 shrink-0 fixed lg:static lg:translate-x-0 h-[calc(100vh-64px)] lg:h-screen z-50 transition-transform duration-300 flex flex-col overflow-hidden",
+          "bg-white border-r border-gray-200 w-72 md:w-64 shrink-0 fixed lg:static lg:translate-x-0 h-full top-[64px] lg:top-0 lg:h-screen z-50 transition-transform duration-300 flex flex-col overflow-hidden",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

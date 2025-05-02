@@ -50,15 +50,15 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const unreadNotifications = notifications?.filter(n => !n.isRead) || [];
   
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 h-16 shrink-0 flex items-center px-6 z-20">
-          <h1 className="text-xl font-semibold">{title}</h1>
+        <header className="bg-white border-b border-gray-200 h-16 shrink-0 flex items-center px-4 lg:px-6 z-20">
+          <h1 className="text-lg lg:text-xl font-semibold">{title}</h1>
           
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex items-center gap-2 lg:gap-4">
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -71,7 +71,7 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] max-w-[320px] lg:w-80">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {notifications && notifications.length > 0 ? (
@@ -98,7 +98,7 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
         </header>
         
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
           {children}
         </main>
       </div>
