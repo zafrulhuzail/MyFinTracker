@@ -117,13 +117,22 @@ export default function AdminDashboard() {
     }
   });
   
-  // Transform claim types data for chart
-  const chartData = Object.entries(claimsByType).map(([type, statuses]) => ({
+  // Transform data for ring charts
+  const claimTypeRingChart = Object.entries(claimsByType).map(([type, _]) => ({
     name: type,
-    pending: statuses.pending,
-    approved: statuses.approved,
-    rejected: statuses.rejected
+    value: claims?.filter(claim => claim.claimType === type).length || 0
   }));
+  
+  // Create a dataset for each claim type showing status distribution
+  const claimStatusByType: Record<string, { name: string, value: number, color: string }[]> = {};
+  
+  Object.entries(claimsByType).forEach(([type, statuses]) => {
+    claimStatusByType[type] = [
+      { name: "Pending", value: statuses.pending, color: "hsl(var(--warning))" },
+      { name: "Approved", value: statuses.approved, color: "hsl(var(--success))" },
+      { name: "Rejected", value: statuses.rejected, color: "hsl(var(--error))" }
+    ].filter(item => item.value > 0); // Only include statuses with values
+  });
   
   // Get latest claims for the quick view
   const latestClaims = claims
@@ -201,23 +210,73 @@ export default function AdminDashboard() {
                   
                   {isLoadingClaims ? (
                     <Skeleton className="h-64 w-full" />
-                  ) : chartData.length > 0 ? (
-                    <div className="h-64">
-                      <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
-                        <RechartsPrimitive.BarChart
-                          data={chartData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <RechartsPrimitive.CartesianGrid strokeDasharray="3 3" />
-                          <RechartsPrimitive.XAxis dataKey="name" />
-                          <RechartsPrimitive.YAxis />
-                          <RechartsPrimitive.Tooltip />
-                          <RechartsPrimitive.Legend />
-                          <RechartsPrimitive.Bar dataKey="pending" stackId="a" fill="hsl(var(--warning))" />
-                          <RechartsPrimitive.Bar dataKey="approved" stackId="a" fill="hsl(var(--success))" />
-                          <RechartsPrimitive.Bar dataKey="rejected" stackId="a" fill="hsl(var(--error))" />
-                        </RechartsPrimitive.BarChart>
-                      </RechartsPrimitive.ResponsiveContainer>
+                  ) : Object.keys(claimsByType).length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Main Claim Types Ring Chart */}
+                      <div className="h-72">
+                        <div className="text-center mb-2 font-medium">Distribution by Claim Type</div>
+                        <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
+                          <RechartsPrimitive.PieChart>
+                            <RechartsPrimitive.Pie
+                              data={claimTypeRingChart}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              paddingAngle={5}
+                              dataKey="value"
+                              label={({name, percent}) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            >
+                              {claimTypeRingChart.map((entry, index) => (
+                                <RechartsPrimitive.Cell 
+                                  key={`cell-${index}`} 
+                                  fill={
+                                    index === 0 ? "hsl(var(--primary))" :
+                                    index === 1 ? "hsl(var(--info))" :
+                                    index === 2 ? "hsl(var(--accent))" :
+                                    `hsl(${index * 60}, 70%, 50%)`
+                                  } 
+                                />
+                              ))}
+                            </RechartsPrimitive.Pie>
+                            <RechartsPrimitive.Tooltip formatter={(value) => [`${value} claims`, 'Count']} />
+                          </RechartsPrimitive.PieChart>
+                        </RechartsPrimitive.ResponsiveContainer>
+                      </div>
+                      
+                      {/* Claims Status Distribution */}
+                      <div className="h-72">
+                        <div className="text-center mb-2 font-medium">Claims by Status</div>
+                        <RechartsPrimitive.ResponsiveContainer width="100%" height="100%">
+                          <RechartsPrimitive.PieChart>
+                            <RechartsPrimitive.Pie
+                              data={[
+                                { name: "Pending", value: pendingClaims, color: "hsl(var(--warning))" },
+                                { name: "Approved", value: approvedClaims, color: "hsl(var(--success))" },
+                                { name: "Rejected", value: rejectedClaims, color: "hsl(var(--error))" }
+                              ].filter(item => item.value > 0)}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              paddingAngle={5}
+                              dataKey="value"
+                              label={({name, percent}) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            >
+                              {[
+                                { name: "Pending", value: pendingClaims, color: "hsl(var(--warning))" },
+                                { name: "Approved", value: approvedClaims, color: "hsl(var(--success))" },
+                                { name: "Rejected", value: rejectedClaims, color: "hsl(var(--error))" }
+                              ].filter(item => item.value > 0).map((entry, index) => (
+                                <RechartsPrimitive.Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </RechartsPrimitive.Pie>
+                            <RechartsPrimitive.Tooltip formatter={(value) => [`${value} claims`, 'Count']} />
+                          </RechartsPrimitive.PieChart>
+                        </RechartsPrimitive.ResponsiveContainer>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center h-64 text-gray-500">
@@ -228,113 +287,61 @@ export default function AdminDashboard() {
               </Card>
               
               {/* Student Distribution Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Students by Country</h3>
-                  <Card>
-                    {isLoadingUsers ? (
-                      <div className="p-4">
-                        <Skeleton className="h-64 w-full" />
-                      </div>
-                    ) : topCountries.length > 0 ? (
-                      <div className="p-6">
-                        {topCountries.map(([country, count], index) => (
-                          <div key={country} className="mb-4">
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium">{country}</span>
-                              <span className="text-gray-600">{count} students</span>
-                            </div>
-                            <div className="h-2.5 bg-gray-200 rounded-full">
-                              <div 
-                                className={`h-2.5 rounded-full ${
-                                  index === 0 ? 'bg-primary' : 
-                                  index === 1 ? 'bg-blue-500' : 'bg-purple-500'
-                                }`}
-                                style={{ 
-                                  width: `${(count / totalStudents) * 100}%` 
-                                }}
-                              ></div>
-                            </div>
+              <div className="w-full">
+                <h3 className="text-lg font-medium mb-4">Students by Country</h3>
+                <Card>
+                  {isLoadingUsers ? (
+                    <div className="p-4">
+                      <Skeleton className="h-64 w-full" />
+                    </div>
+                  ) : topCountries.length > 0 ? (
+                    <div className="p-6">
+                      {topCountries.map(([country, count], index) => (
+                        <div key={country} className="mb-4">
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium">{country}</span>
+                            <span className="text-gray-600">{count} students</span>
                           </div>
-                        ))}
-                        
-                        {totalStudents > 0 && topCountries.reduce((acc, [_, count]) => acc + count, 0) < totalStudents && (
-                          <div className="mb-4">
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium">Other Countries</span>
-                              <span className="text-gray-600">
-                                {totalStudents - topCountries.reduce((acc, [_, count]) => acc + count, 0)} students
-                              </span>
-                            </div>
-                            <div className="h-2.5 bg-gray-200 rounded-full">
-                              <div 
-                                className="h-2.5 rounded-full bg-gray-400"
-                                style={{ 
-                                  width: `${((totalStudents - topCountries.reduce((acc, [_, count]) => acc + count, 0)) / totalStudents) * 100}%` 
-                                }}
-                              ></div>
-                            </div>
+                          <div className="h-2.5 bg-gray-200 rounded-full">
+                            <div 
+                              className={`h-2.5 rounded-full ${
+                                index === 0 ? 'bg-primary' : 
+                                index === 1 ? 'bg-blue-500' : 'bg-purple-500'
+                              }`}
+                              style={{ 
+                                width: `${(count / totalStudents) * 100}%` 
+                              }}
+                            ></div>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-6 text-center text-gray-500">
-                        <Flag size={48} className="mx-auto mb-4 text-gray-300" />
-                        <p>No student data available</p>
-                      </div>
-                    )}
-                  </Card>
-                </div>
-                
-                {/* Recent Claims Table */}
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Recent Claims</h3>
-                  
-                  <Card>
-                    {isLoadingClaims ? (
-                      <div className="p-4">
-                        <Skeleton className="h-64 w-full" />
-                      </div>
-                    ) : latestClaims && latestClaims.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {latestClaims.map((claim) => (
-                            <TableRow key={claim.id}>
-                              <TableCell>CL{claim.id.toString().padStart(4, '0')}</TableCell>
-                              <TableCell>{claim.claimType}</TableCell>
-                              <TableCell>€{claim.amount.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                                  claim.status === "approved" ? "bg-green-100 text-success" :
-                                  claim.status === "rejected" ? "bg-red-100 text-error" :
-                                  "bg-yellow-100 text-warning"
-                                }`}>
-                                  {claim.status.charAt(0).toUpperCase() + claim.status.slice(1)}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                {new Date(claim.createdAt).toLocaleDateString()}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <div className="p-6 text-center text-gray-500">
-                        No claims available
-                      </div>
-                    )}
-                  </Card>
-                </div>
+                        </div>
+                      ))}
+                      
+                      {totalStudents > 0 && topCountries.reduce((acc, [_, count]) => acc + count, 0) < totalStudents && (
+                        <div className="mb-4">
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium">Other Countries</span>
+                            <span className="text-gray-600">
+                              {totalStudents - topCountries.reduce((acc, [_, count]) => acc + count, 0)} students
+                            </span>
+                          </div>
+                          <div className="h-2.5 bg-gray-200 rounded-full">
+                            <div 
+                              className="h-2.5 rounded-full bg-gray-400"
+                              style={{ 
+                                width: `${((totalStudents - topCountries.reduce((acc, [_, count]) => acc + count, 0)) / totalStudents) * 100}%` 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center text-gray-500">
+                      <Flag size={48} className="mx-auto mb-4 text-gray-300" />
+                      <p>No student data available</p>
+                    </div>
+                  )}
+                </Card>
               </div>
             </TabsContent>
             
@@ -355,8 +362,8 @@ export default function AdminDashboard() {
                 </div>
                 
                 {isLoadingUsers ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[...Array(4)].map((_, i) => (
+                  <div className="grid grid-cols-1 gap-4">
+                    {[...Array(3)].map((_, i) => (
                       <Skeleton key={i} className="h-64 w-full" />
                     ))}
                   </div>
@@ -367,63 +374,92 @@ export default function AdminDashboard() {
                     user.maraId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     user.university.toLowerCase().includes(searchQuery.toLowerCase()))
                 ).length ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {users
-                      .filter(user => 
-                        user.role !== "admin" && 
+                  <div className="space-y-6">
+                    {/* Group students by country */}
+                    {Array.from(new Set(
+                      users
+                        .filter(user => 
+                          user.role !== "admin" && 
+                          (searchQuery === "" || 
+                            user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            user.maraId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            user.university.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
+                        .map(user => user.countryOfStudy)
+                    )).map(country => {
+                      // Get all students for this country
+                      const countryStudents = users.filter(
+                        user => user.role !== "admin" && 
+                        user.countryOfStudy === country &&
                         (searchQuery === "" || 
                           user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           user.maraId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           user.university.toLowerCase().includes(searchQuery.toLowerCase()))
-                      )
-                      .map(student => (
-                        <Card key={student.id} className="overflow-hidden">
-                          <div className="bg-gradient-to-r from-blue-500 to-primary h-12"></div>
-                          <div className="p-4 pt-0 -mt-6">
-                            <div className="flex gap-4">
-                              <Avatar className="h-16 w-16 border-4 border-white">
-                                <AvatarFallback className="text-xl bg-primary text-white">
-                                  {student.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 mt-2">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h4 className="font-bold text-lg">{student.fullName}</h4>
-                                    <p className="text-sm text-gray-600">MARA ID: {student.maraId}</p>
-                                  </div>
-                                  <Badge variant="outline" className="text-xs border-primary text-primary">
-                                    {student.degreeLevel}
-                                  </Badge>
-                                </div>
+                      );
+                      
+                      return (
+                        <Card key={country} className="overflow-hidden">
+                          <div className="bg-gradient-to-r from-blue-500 to-primary p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <Flag className="h-5 w-5 text-white mr-2" />
+                                <h3 className="text-white font-semibold text-lg">{country}</h3>
                               </div>
+                              <Badge variant="outline" className="bg-white/20 text-white border-white/40">
+                                {countryStudents.length} Students
+                              </Badge>
                             </div>
-                            
-                            <div className="grid grid-cols-1 gap-3 mt-4">
-                              <div className="flex items-center gap-2 text-sm">
-                                <School size={16} className="text-gray-400" />
-                                <span className="font-medium">{student.university}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <BookOpen size={16} className="text-gray-400" />
-                                <span>{student.fieldOfStudy}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <Mail size={16} className="text-gray-400" />
-                                <span>{student.email}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <Flag size={16} className="text-gray-400" />
-                                <span>{student.countryOfStudy}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <BadgeInfo size={16} className="text-gray-400" />
-                                <span>MARA Group: {student.maraGroup}</span>
-                              </div>
+                          </div>
+                          
+                          <div className="p-4">
+                            <div className="grid grid-cols-1 divide-y">
+                              {countryStudents.map(student => (
+                                <div key={student.id} className="py-3 first:pt-0 last:pb-0">
+                                  <div className="flex items-start gap-3">
+                                    <Avatar className="h-10 w-10">
+                                      <AvatarFallback className="text-sm bg-primary text-white">
+                                        {student.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <h4 className="font-medium text-base">{student.fullName}</h4>
+                                          <p className="text-xs text-gray-600">MARA ID: {student.maraId}</p>
+                                        </div>
+                                        <Badge variant="outline" className="text-xs border-primary text-primary">
+                                          {student.degreeLevel}
+                                        </Badge>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-sm">
+                                        <div className="flex items-center gap-1">
+                                          <School size={14} className="text-gray-400" />
+                                          <span className="truncate">{student.university}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <BookOpen size={14} className="text-gray-400" />
+                                          <span className="truncate">{student.fieldOfStudy}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <BadgeInfo size={14} className="text-gray-400" />
+                                          <span>Group: {student.maraGroup}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Mail size={14} className="text-gray-400" />
+                                          <span className="truncate">{student.email}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </Card>
-                      ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="p-8 text-center text-gray-500 border rounded-md bg-gray-50">
