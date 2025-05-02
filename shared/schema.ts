@@ -41,9 +41,8 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const claims = pgTable("claims", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  claimType: text("claim_type").notNull(), // This will now store a comma-separated list of claim types
-  claimDetails: jsonb("claim_details").notNull().default({}), // This will store the different claim types and their amounts
-  amount: real("amount").notNull(), // Total amount (sum of all claim details)
+  claimType: text("claim_type").notNull(),
+  amount: real("amount").notNull(),
   claimPeriod: text("claim_period").notNull(),
   description: text("description"),
   receiptFile: text("receipt_file").notNull(),

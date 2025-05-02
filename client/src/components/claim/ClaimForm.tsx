@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { claimFormSchema, claimTypes, ClaimDetail } from "@/lib/validators";
+import { claimFormSchema, claimTypes } from "@/lib/validators";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -28,14 +28,13 @@ export default function ClaimForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
   const [selectedClaimTypes, setSelectedClaimTypes] = useState<string[]>([]);
-  const [claimDetails, setClaimDetails] = useState<Record<string, {amount: number, description: string}>>({});
+  const [typeAmounts, setTypeAmounts] = useState<Record<string, number>>({});
   
   // Initialize form with default values
   const form = useForm({
     resolver: zodResolver(claimFormSchema),
     defaultValues: {
-      claimType: "",
-      claimDetails: [],
+      claimType: claimTypes[0], // Default to first claim type
       amount: 0,
       claimPeriod: "",
       description: "",
@@ -46,14 +45,47 @@ export default function ClaimForm() {
       accountNumber: user?.accountNumber || "",
       swiftCode: user?.swiftCode || "",
       declaration: false,
+      selectedTypes: [],
+      typeAmounts: {},
     }
   });
   
-  // Calculate total whenever claim details change
+  // Select the main claim type based on which has the highest amount
+  useEffect(() => {
+    if (selectedClaimTypes.length > 0) {
+      // Find the claim type with the highest amount
+      let maxType = selectedClaimTypes[0];
+      let maxAmount = typeAmounts[maxType] || 0;
+      
+      selectedClaimTypes.forEach(type => {
+        const amount = typeAmounts[type] || 0;
+        if (amount > maxAmount) {
+          maxType = type;
+          maxAmount = amount;
+        }
+      });
+      
+      // Update the form's claimType field
+      form.setValue("claimType", maxType as any);
+    } else if (selectedClaimTypes.length === 0) {
+      // If no claim types selected, default to first one but don't show it
+      form.setValue("claimType", claimTypes[0] as any);
+    }
+    
+    // Calculate and update the total amount
+    let total = 0;
+    Object.values(typeAmounts).forEach(amount => {
+      total += amount;
+    });
+    form.setValue("amount", total);
+    
+  }, [selectedClaimTypes, typeAmounts, form]);
+  
+  // Calculate total whenever claim amounts change
   const calculateTotal = () => {
     let total = 0;
-    Object.values(claimDetails).forEach(detail => {
-      total += detail.amount;
+    Object.values(typeAmounts).forEach(amount => {
+      total += amount;
     });
     return total;
   };
@@ -67,8 +99,43 @@ export default function ClaimForm() {
     try {
       setIsLoading(true);
       
-      // Remove declaration as it's just for UI
-      const { declaration, ...submitData } = data;
+      // Validate we have at least one claim type selected
+      if (selectedClaimTypes.length === 0) {
+        toast({
+          title: "Missing claim type",
+          description: "Please select at least one claim type",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate total amount is greater than zero
+      if (calculateTotal() <= 0) {
+        toast({
+          title: "Invalid amount",
+          description: "Total amount must be greater than zero",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Remove UI-only fields before submission
+      const { 
+        declaration, 
+        selectedTypes, 
+        typeAmounts,
+        ...submitData 
+      } = data;
+      
+      // Add a summary of the selected claim types to the description
+      if (selectedClaimTypes.length > 1) {
+        const breakdown = selectedClaimTypes.map(type => 
+          `${type}: €${(data.typeAmounts[type] || 0).toFixed(2)}`
+        ).join('\n');
+        
+        submitData.description = 
+          `${submitData.description || ''}\n\nClaim Breakdown:\n${breakdown}`;
+      }
       
       // Make API request to create claim
       await apiRequest("POST", "/api/claims", submitData);
@@ -105,7 +172,7 @@ export default function ClaimForm() {
           <div className="space-y-4">
             {claimTypes.map((claimType) => {
               const isSelected = selectedClaimTypes.includes(claimType);
-              const detail = claimDetails[claimType] || { amount: 0, description: '' };
+              const amount = typeAmounts[claimType] || 0;
               
               return (
                 <div key={claimType} className={`border rounded-lg p-4 ${isSelected ? 'border-primary bg-primary/5' : ''}`}>
@@ -116,35 +183,28 @@ export default function ClaimForm() {
                       onCheckedChange={(checked) => {
                         if (checked) {
                           // Add to selected types
-                          setSelectedClaimTypes([...selectedClaimTypes, claimType]);
+                          const newSelectedTypes = [...selectedClaimTypes, claimType];
+                          setSelectedClaimTypes(newSelectedTypes);
+                          form.setValue("selectedTypes", newSelectedTypes as any);
                           
-                          // Add to claim details if not already there
-                          if (!claimDetails[claimType]) {
-                            setClaimDetails({
-                              ...claimDetails,
-                              [claimType]: { amount: 0, description: '' }
-                            });
+                          // Initialize amount if not exists
+                          if (!typeAmounts[claimType]) {
+                            const newAmounts = { ...typeAmounts, [claimType]: 0 };
+                            setTypeAmounts(newAmounts);
+                            form.setValue("typeAmounts", newAmounts as any);
                           }
                         } else {
                           // Remove from selected types
-                          setSelectedClaimTypes(selectedClaimTypes.filter(t => t !== claimType));
+                          const newSelectedTypes = selectedClaimTypes.filter(t => t !== claimType);
+                          setSelectedClaimTypes(newSelectedTypes);
+                          form.setValue("selectedTypes", newSelectedTypes as any);
                           
-                          // Remove from claim details
-                          const newDetails = {...claimDetails};
-                          delete newDetails[claimType];
-                          setClaimDetails(newDetails);
+                          // Remove amount
+                          const newAmounts = { ...typeAmounts };
+                          delete newAmounts[claimType];
+                          setTypeAmounts(newAmounts);
+                          form.setValue("typeAmounts", newAmounts as any);
                         }
-                        
-                        // Update form values
-                        const formattedDetails = Object.entries(claimDetails).map(([type, detail]) => ({
-                          type,
-                          amount: detail.amount,
-                          description: detail.description
-                        }));
-                        
-                        form.setValue("claimDetails", formattedDetails);
-                        form.setValue("claimType", selectedClaimTypes.join(","));
-                        form.setValue("amount", calculateTotal());
                       }}
                       className="mt-1"
                     />
@@ -171,57 +231,17 @@ export default function ClaimForm() {
                           type="number"
                           placeholder="0.00"
                           step="0.01"
-                          value={detail.amount || ''}
+                          value={amount || ''}
                           onChange={(e) => {
-                            const amount = parseFloat(e.target.value) || 0;
-                            const newDetails = {
-                              ...claimDetails,
-                              [claimType]: {
-                                ...detail,
-                                amount
-                              }
+                            const newAmount = parseFloat(e.target.value) || 0;
+                            const newAmounts = {
+                              ...typeAmounts,
+                              [claimType]: newAmount
                             };
-                            setClaimDetails(newDetails);
-                            
-                            // Update form values
-                            const formattedDetails = Object.entries(newDetails).map(([type, detail]) => ({
-                              type,
-                              amount: detail.amount,
-                              description: detail.description
-                            }));
-                            
-                            form.setValue("claimDetails", formattedDetails);
-                            form.setValue("amount", calculateTotal() + amount - (detail.amount || 0));
+                            setTypeAmounts(newAmounts);
+                            form.setValue("typeAmounts", newAmounts as any);
                           }}
                           className="max-w-xs"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium">Description (Optional)</label>
-                        <Input
-                          type="text"
-                          placeholder="Additional details for this claim type"
-                          value={detail.description || ''}
-                          onChange={(e) => {
-                            const newDetails = {
-                              ...claimDetails,
-                              [claimType]: {
-                                ...detail,
-                                description: e.target.value
-                              }
-                            };
-                            setClaimDetails(newDetails);
-                            
-                            // Update form values
-                            const formattedDetails = Object.entries(newDetails).map(([type, detail]) => ({
-                              type,
-                              amount: detail.amount,
-                              description: detail.description
-                            }));
-                            
-                            form.setValue("claimDetails", formattedDetails);
-                          }}
                         />
                       </div>
                     </div>
@@ -230,9 +250,15 @@ export default function ClaimForm() {
               );
             })}
             
+            {selectedClaimTypes.length === 0 && (
+              <div className="border border-yellow-200 bg-yellow-50 p-4 rounded-md">
+                <p className="text-yellow-700">Please select at least one claim type.</p>
+              </div>
+            )}
+            
             <FormField
               control={form.control}
-              name="claimDetails"
+              name="claimType"
               render={() => (
                 <FormItem>
                   <FormMessage />
@@ -259,7 +285,7 @@ export default function ClaimForm() {
                   {selectedClaimTypes.map(type => (
                     <li key={type} className="flex justify-between">
                       <span>{type}</span>
-                      <span>€{claimDetails[type]?.amount.toFixed(2) || "0.00"}</span>
+                      <span>€{(typeAmounts[type] || 0).toFixed(2)}</span>
                     </li>
                   ))}
                 </ul>
@@ -268,7 +294,7 @@ export default function ClaimForm() {
           </div>
           
           <div className="space-y-4">
-            {/* Hidden fields to store the calculated values */}
+            {/* These fields will be updated by the useEffect */}
             <input type="hidden" {...form.register("amount")} />
             <input type="hidden" {...form.register("claimType")} />
             
