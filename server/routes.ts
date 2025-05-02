@@ -28,6 +28,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
   const apiRouter = express.Router();
   
+  // Health check for deployment monitoring
+  apiRouter.get("/health", (req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+  });
+  
   // Auth routes
   apiRouter.post("/auth/login", async (req: Request, res: Response) => {
     try {
