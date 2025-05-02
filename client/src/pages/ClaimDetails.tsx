@@ -101,9 +101,9 @@ export default function ClaimDetails() {
   }
   
   return (
-    <div className="flex flex-col">
-      <div className="pb-16">
-        <div className="px-4 py-6">
+    <div className="flex flex-col w-full">
+      <div className="pb-16 w-full">
+        <div className="px-4 py-6 w-full">
           {/* Claim Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">

@@ -22,11 +22,17 @@ body {
 main {
   overflow-y: auto;
   height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scrollbar */
 }
 
 /* Remove any potential overflow from the App container */
 .flex-col, .flex-row {
   overflow: visible;
+}
+
+/* Fix double scroll issues in components */
+.overflow-auto, .overflow-y-auto {
+  overflow-x: hidden; /* Prevent horizontal scrollbar */
 }
 
 :root {
