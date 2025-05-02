@@ -58,7 +58,7 @@ function NavItem({ to, label, icon, active, onClose }: NavItemProps) {
 export default function Sidebar() {
   const [location] = useLocation();
   const { isAdmin, user, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { mobileMenuOpen, setMobileMenuOpen } = useSidebar();
 
   // Don't render sidebar on login and register pages
   if (location === "/login" || location === "/register") {
@@ -72,24 +72,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-gray-200 p-4 fixed top-0 left-0 right-0 z-30 flex justify-between items-center">
-        <Link to="/">
-          <h1 className="text-xl font-semibold">
-            <span className="text-primary">My</span>
-            <span className="text-teal-500">Fin</span>
-            <span className="text-slate-700">Tracker</span>
-          </h1>
-        </Link>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="focus:outline-none"
-        >
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-      </div>
 
       {/* Mobile Sidebar (Overlay) */}
       {mobileMenuOpen && (

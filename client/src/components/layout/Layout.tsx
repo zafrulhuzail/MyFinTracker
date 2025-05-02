@@ -105,7 +105,7 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => setMobileMenuOpen(prev => !prev)}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
               <Menu className="h-5 w-5" />
