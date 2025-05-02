@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Notification } from "@shared/schema";
 import { 
   DropdownMenu,
@@ -17,6 +17,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface LayoutProps {
   children: ReactNode;
@@ -38,6 +40,7 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const [location] = useLocation();
   const { user } = useAuth();
   const { mobileMenuOpen, setMobileMenuOpen } = useSidebar();
+  const { toast } = useToast();
   
   // Don't render layout on login and register pages
   if (location === "/login" || location === "/register") {
@@ -48,6 +51,32 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const { data: notifications } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
   });
+  
+  // Mark notification as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("PUT", `/api/notifications/${id}/read`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      // Invalidate the notifications query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark notification as read",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle notification click
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.isRead) {
+      markAsReadMutation.mutate(notification.id);
+    }
+  };
 
   const unreadNotifications = notifications?.filter(n => !n.isRead) || [];
   
@@ -78,7 +107,11 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
                 <DropdownMenuSeparator />
                 {notifications && notifications.length > 0 ? (
                   notifications.slice(0, 5).map((notification) => (
-                    <DropdownMenuItem key={notification.id} className="cursor-pointer p-0">
+                    <DropdownMenuItem 
+                      key={notification.id} 
+                      className="cursor-pointer p-0"
+                      onClick={() => handleNotificationClick(notification)}
+                    >
                       <Card className={cn(
                         "w-full p-3 border-l-4",
                         !notification.isRead ? "border-l-primary bg-primary/5" : "border-l-gray-200"
@@ -129,7 +162,11 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
               <DropdownMenuSeparator />
               {notifications && notifications.length > 0 ? (
                 notifications.slice(0, 5).map((notification) => (
-                  <DropdownMenuItem key={notification.id} className="cursor-pointer p-0">
+                  <DropdownMenuItem 
+                    key={notification.id} 
+                    className="cursor-pointer p-0"
+                    onClick={() => handleNotificationClick(notification)}
+                  >
                     <Card className={cn(
                       "w-full p-3 border-l-4",
                       !notification.isRead ? "border-l-primary bg-primary/5" : "border-l-gray-200"
