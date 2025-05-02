@@ -138,6 +138,13 @@ export default function Sidebar() {
                 onClose={closeMobileMenu}
               />
               <NavItem
+                to="/notifications"
+                label="Notifications"
+                icon={<Bell size={20} />}
+                active={location === "/notifications"}
+                onClose={closeMobileMenu}
+              />
+              <NavItem
                 to="/profile"
                 label="Settings"
                 icon={<User size={20} />}
@@ -174,6 +181,13 @@ export default function Sidebar() {
                 label="Academic Records"
                 icon={<GraduationCap size={20} />}
                 active={location === "/grades"}
+                onClose={closeMobileMenu}
+              />
+              <NavItem
+                to="/notifications"
+                label="Notifications"
+                icon={<Bell size={20} />}
+                active={location === "/notifications"}
                 onClose={closeMobileMenu}
               />
               <NavItem
