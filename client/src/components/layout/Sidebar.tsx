@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 import { 
   Home, 
   PlusCircle, 
@@ -23,19 +24,27 @@ interface NavItemProps {
 }
 
 function NavItem({ to, label, icon, active }: NavItemProps) {
+  const [, navigate] = useLocation();
+  const { setMobileMenuOpen } = useSidebar();
+  
+  const handleClick = () => {
+    // Close mobile menu when navigating
+    setMobileMenuOpen(false);
+    navigate(to);
+  };
+  
   return (
-    <Link to={to}>
-      <Button
-        variant="ghost"
-        className={cn(
-          "w-full justify-start gap-3 mb-1 font-normal",
-          active ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-primary"
-        )}
-      >
-        {icon}
-        <span>{label}</span>
-      </Button>
-    </Link>
+    <Button
+      variant="ghost"
+      className={cn(
+        "w-full justify-start gap-3 mb-1 font-normal",
+        active ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-primary"
+      )}
+      onClick={handleClick}
+    >
+      {icon}
+      <span>{label}</span>
+    </Button>
   );
 }
 
@@ -81,7 +90,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div 
         className={cn(
-          "bg-white border-r border-gray-200 w-72 md:w-64 shrink-0 fixed lg:static lg:translate-x-0 h-full top-[64px] lg:top-0 lg:h-screen z-50 transition-transform duration-300 flex flex-col overflow-hidden",
+          "bg-white border-r border-gray-200 w-[85%] sm:w-72 md:w-64 shrink-0 fixed lg:static lg:translate-x-0 h-full top-[64px] lg:top-0 lg:h-screen z-50 transition-transform duration-300 flex flex-col overflow-y-auto",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
