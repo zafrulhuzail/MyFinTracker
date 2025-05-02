@@ -23,13 +23,20 @@ interface NavItemProps {
   active: boolean;
 }
 
-function NavItem({ to, label, icon, active }: NavItemProps) {
+interface NavItemProps {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  active: boolean;
+  onClose?: () => void;
+}
+
+function NavItem({ to, label, icon, active, onClose }: NavItemProps) {
   const [, navigate] = useLocation();
-  const { setMobileMenuOpen } = useSidebar();
   
   const handleClick = () => {
     // Close mobile menu when navigating
-    setMobileMenuOpen(false);
+    if (onClose) onClose();
     navigate(to);
   };
   
@@ -57,6 +64,11 @@ export default function Sidebar() {
   if (location === "/login" || location === "/register") {
     return null;
   }
+  
+  // Function to close mobile menu
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
 
   return (
     <>
@@ -126,24 +138,28 @@ export default function Sidebar() {
                 label="Dashboard"
                 icon={<LayoutDashboard size={20} />}
                 active={location === "/admin"}
+                onClose={closeMobileMenu}
               />
               <NavItem
                 to="/admin/students"
                 label="Student Directory"
                 icon={<Users size={20} />}
                 active={location === "/admin/students"}
+                onClose={closeMobileMenu}
               />
               <NavItem
                 to="/admin/claims"
                 label="Claims Management"
                 icon={<History size={20} />}
                 active={location === "/admin/claims"}
+                onClose={closeMobileMenu}
               />
               <NavItem
                 to="/profile"
                 label="Settings"
                 icon={<User size={20} />}
                 active={location === "/profile"}
+                onClose={closeMobileMenu}
               />
             </>
           ) : (
@@ -154,24 +170,28 @@ export default function Sidebar() {
                 label="Home"
                 icon={<Home size={20} />}
                 active={location === "/"}
+                onClose={closeMobileMenu}
               />
               <NavItem
                 to="/new-claim"
                 label="New Claim"
                 icon={<PlusCircle size={20} />}
                 active={location === "/new-claim"}
+                onClose={closeMobileMenu}
               />
               <NavItem
                 to="/history"
                 label="Claim History"
                 icon={<History size={20} />}
                 active={location === "/history"}
+                onClose={closeMobileMenu}
               />
               <NavItem
                 to="/grades"
                 label="Academic Records"
                 icon={<GraduationCap size={20} />}
                 active={location === "/grades"}
+                onClose={closeMobileMenu}
               />
               <NavItem
                 to="/profile"
