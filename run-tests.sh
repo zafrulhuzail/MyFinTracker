@@ -2,29 +2,10 @@
 
 # Script to run various test suites
 
-# Function to restart the application
-restart_app() {
-  echo "Restarting application..."
-  echo "Please press Enter to continue after tests have completed."
-  read -p "Application will restart after you press Enter."
-  npm run dev
-}
-
-# Check if application is running and ask to stop
-check_and_stop() {
-  echo "Running tests..."
-  echo "NOTE: If the application is running, you need to stop it first (Ctrl+C)."
-}
-
 run_test() {
-  check_and_stop
+  echo "Running tests..."
   $1
   echo "Tests completed."
-  echo "Would you like to restart the application? (y/n)"
-  read restart_choice
-  if [[ $restart_choice == "y" ]]; then
-    restart_app
-  fi
 }
 
 case "$1" in
