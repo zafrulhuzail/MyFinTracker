@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-import { SidebarProvider } from '@/contexts/SidebarContext';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { SidebarProvider } from '../client/src/contexts/SidebarContext';
+import { AuthProvider } from '../client/src/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Create a custom wrapper with all providers

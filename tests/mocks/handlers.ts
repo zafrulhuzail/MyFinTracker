@@ -1,5 +1,5 @@
-import { rest } from 'msw';
-import { Claim, User, AcademicRecord, Course, Notification } from '@shared/schema';
+import { http, HttpResponse } from 'msw';
+import { Claim, User, AcademicRecord, Course, Notification } from '../../shared/schema';
 
 // Mock data
 export const mockUser: User = {
@@ -82,61 +82,61 @@ export const mockNotification: Notification = {
 // Define handlers
 export const handlers = [
   // Auth endpoints
-  rest.post('/api/auth/login', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(mockUser));
+  http.post('/api/auth/login', () => {
+    return HttpResponse.json(mockUser, { status: 200 });
   }),
   
-  rest.post('/api/auth/logout', (req, res, ctx) => {
-    return res(ctx.status(200));
+  http.post('/api/auth/logout', () => {
+    return new HttpResponse(null, { status: 200 });
   }),
   
-  rest.get('/api/auth/me', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(mockUser));
+  http.get('/api/auth/me', () => {
+    return HttpResponse.json(mockUser, { status: 200 });
   }),
   
   // Claims endpoints
-  rest.get('/api/claims', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json([mockClaim]));
+  http.get('/api/claims', () => {
+    return HttpResponse.json([mockClaim], { status: 200 });
   }),
   
-  rest.get('/api/claims/:id', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(mockClaim));
+  http.get('/api/claims/:id', () => {
+    return HttpResponse.json(mockClaim, { status: 200 });
   }),
   
-  rest.post('/api/claims', (req, res, ctx) => {
-    return res(ctx.status(201), ctx.json(mockClaim));
+  http.post('/api/claims', () => {
+    return HttpResponse.json(mockClaim, { status: 201 });
   }),
   
-  rest.put('/api/claims/:id/status', (req, res, ctx) => {
+  http.put('/api/claims/:id/status', () => {
     const updatedClaim = { ...mockClaim, status: 'approved' };
-    return res(ctx.status(200), ctx.json(updatedClaim));
+    return HttpResponse.json(updatedClaim, { status: 200 });
   }),
   
   // Academic records endpoints
-  rest.get('/api/academic-records', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json([mockAcademicRecord]));
+  http.get('/api/academic-records', () => {
+    return HttpResponse.json([mockAcademicRecord], { status: 200 });
   }),
   
-  rest.post('/api/academic-records', (req, res, ctx) => {
-    return res(ctx.status(201), ctx.json(mockAcademicRecord));
+  http.post('/api/academic-records', () => {
+    return HttpResponse.json(mockAcademicRecord, { status: 201 });
   }),
   
   // Course endpoints
-  rest.get('/api/academic-records/:id/courses', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json([mockCourse]));
+  http.get('/api/academic-records/:id/courses', () => {
+    return HttpResponse.json([mockCourse], { status: 200 });
   }),
   
-  rest.post('/api/courses', (req, res, ctx) => {
-    return res(ctx.status(201), ctx.json(mockCourse));
+  http.post('/api/courses', () => {
+    return HttpResponse.json(mockCourse, { status: 201 });
   }),
   
   // Notifications endpoints
-  rest.get('/api/notifications', (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json([mockNotification]));
+  http.get('/api/notifications', () => {
+    return HttpResponse.json([mockNotification], { status: 200 });
   }),
   
-  rest.put('/api/notifications/:id/read', (req, res, ctx) => {
+  http.put('/api/notifications/:id/read', () => {
     const updatedNotification = { ...mockNotification, isRead: true };
-    return res(ctx.status(200), ctx.json(updatedNotification));
+    return HttpResponse.json(updatedNotification, { status: 200 });
   })
 ];
