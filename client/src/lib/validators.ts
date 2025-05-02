@@ -29,20 +29,34 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+// Define the claim type enumeration
+export const claimTypes = [
+  "Insurance",
+  "Tuition Fee",
+  "Practical Allowance",
+  "End of Study Allowance",
+  "Flight Ticket",
+  "Other"
+] as const;
+
+// Define the structure for a single claim type detail
+export const claimDetailSchema = z.object({
+  type: z.enum(claimTypes),
+  amount: z.number().positive("Amount must be positive"),
+  description: z.string().optional(),
+});
+
+export type ClaimDetail = z.infer<typeof claimDetailSchema>;
+
 // Claim form validation schema with additional validations
 export const claimFormSchema = insertClaimSchema.extend({
   userId: z.number().optional(),
-  amount: z.number().positive("Amount must be positive"),
-  claimType: z.enum([
-    "Insurance",
-    "Tuition Fee",
-    "Practical Allowance",
-    "End of Study Allowance",
-    "Flight Ticket",
-    "Other"
-  ], {
-    errorMap: () => ({ message: "Please select a claim type" })
-  }),
+  // We'll calculate the total amount from the claim details
+  amount: z.number().positive("Total amount must be positive"),
+  // Store selected claim types as a comma-separated string
+  claimType: z.string().min(1, "At least one claim type must be selected"),
+  // Store detailed claim information as a JSON object
+  claimDetails: z.array(claimDetailSchema).min(1, "At least one claim type must be added"),
   claimPeriod: z.string().min(1, "Please specify the claim period or semester"),
   receiptFile: z.string().min(1, "Receipt or proof of payment is required"),
   declaration: z.boolean().refine(val => val === true, {

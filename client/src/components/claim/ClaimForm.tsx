@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { claimFormSchema } from "@/lib/validators";
+import { claimFormSchema, claimTypes, ClaimDetail } from "@/lib/validators";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -27,13 +27,16 @@ export default function ClaimForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
+  const [selectedClaimTypes, setSelectedClaimTypes] = useState<string[]>([]);
+  const [claimDetails, setClaimDetails] = useState<Record<string, {amount: number, description: string}>>({});
   
   // Initialize form with default values
   const form = useForm({
     resolver: zodResolver(claimFormSchema),
     defaultValues: {
-      claimType: undefined,
-      amount: undefined,
+      claimType: "",
+      claimDetails: [],
+      amount: 0,
       claimPeriod: "",
       description: "",
       receiptFile: "",
@@ -46,10 +49,19 @@ export default function ClaimForm() {
     }
   });
   
-  const claimType = form.watch("claimType") as string | undefined;
+  // Calculate total whenever claim details change
+  const calculateTotal = () => {
+    let total = 0;
+    Object.values(claimDetails).forEach(detail => {
+      total += detail.amount;
+    });
+    return total;
+  };
   
   // Need supporting document for these claim types
-  const needsSupportingDoc = claimType ? ["Practical Allowance", "End of Study Allowance", "Flight Ticket"].includes(claimType) : false;
+  const needsSupportingDoc = selectedClaimTypes.some(type => 
+    ["Practical Allowance", "End of Study Allowance", "Flight Ticket"].includes(type)
+  );
   
   const onSubmit = async (data: any) => {
     try {
@@ -87,110 +99,179 @@ export default function ClaimForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Claim Type Section */}
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Claim Type</h3>
-          
-          <FormField
-            control={form.control}
-            name="claimType"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="grid grid-cols-1 gap-3"
-                  >
-                    <FormItem className="flex items-start space-x-3 space-y-0 border rounded-lg p-3">
-                      <FormControl>
-                        <RadioGroupItem value="Insurance" />
-                      </FormControl>
-                      <div className="flex-1">
-                        <FormLabel className="font-medium">Insurance</FormLabel>
-                        <p className="text-sm text-gray-600">For health and liability insurance fees</p>
-                      </div>
-                    </FormItem>
-                    
-                    <FormItem className="flex items-start space-x-3 space-y-0 border rounded-lg p-3">
-                      <FormControl>
-                        <RadioGroupItem value="Tuition Fee" />
-                      </FormControl>
-                      <div className="flex-1">
-                        <FormLabel className="font-medium">Tuition Fee</FormLabel>
-                        <p className="text-sm text-gray-600">For university or language center fees</p>
-                      </div>
-                    </FormItem>
-                    
-                    <FormItem className="flex items-start space-x-3 space-y-0 border rounded-lg p-3">
-                      <FormControl>
-                        <RadioGroupItem value="Practical Allowance" />
-                      </FormControl>
-                      <div className="flex-1">
-                        <FormLabel className="font-medium">Practical Allowance</FormLabel>
-                        <p className="text-sm text-gray-600">For internship or practical training periods</p>
-                      </div>
-                    </FormItem>
-                    
-                    <FormItem className="flex items-start space-x-3 space-y-0 border rounded-lg p-3">
-                      <FormControl>
-                        <RadioGroupItem value="Flight Ticket" />
-                      </FormControl>
-                      <div className="flex-1">
-                        <FormLabel className="font-medium">Flight Ticket</FormLabel>
-                        <p className="text-sm text-gray-600">For return flights at the end of studies</p>
-                      </div>
-                    </FormItem>
-                    
-                    <FormItem className="flex items-start space-x-3 space-y-0 border rounded-lg p-3">
-                      <FormControl>
-                        <RadioGroupItem value="End of Study Allowance" />
-                      </FormControl>
-                      <div className="flex-1">
-                        <FormLabel className="font-medium">End of Study Allowance</FormLabel>
-                        <p className="text-sm text-gray-600">Final allowance upon completion of studies</p>
-                      </div>
-                    </FormItem>
-                    
-                    <FormItem className="flex items-start space-x-3 space-y-0 border rounded-lg p-3">
-                      <FormControl>
-                        <RadioGroupItem value="Other" />
-                      </FormControl>
-                      <div className="flex-1">
-                        <FormLabel className="font-medium">Other</FormLabel>
-                        <p className="text-sm text-gray-600">For other eligible expenses</p>
-                      </div>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        {/* Claim Details Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Claim Details</h3>
+          <h3 className="text-lg font-medium mb-3">Select Claim Types</h3>
+          <p className="text-sm text-gray-600 mb-4">You can select multiple claim types and specify the amount for each.</p>
           
           <div className="space-y-4">
+            {claimTypes.map((claimType) => {
+              const isSelected = selectedClaimTypes.includes(claimType);
+              const detail = claimDetails[claimType] || { amount: 0, description: '' };
+              
+              return (
+                <div key={claimType} className={`border rounded-lg p-4 ${isSelected ? 'border-primary bg-primary/5' : ''}`}>
+                  <div className="flex items-start mb-2">
+                    <Checkbox 
+                      id={`claim-type-${claimType}`} 
+                      checked={isSelected} 
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          // Add to selected types
+                          setSelectedClaimTypes([...selectedClaimTypes, claimType]);
+                          
+                          // Add to claim details if not already there
+                          if (!claimDetails[claimType]) {
+                            setClaimDetails({
+                              ...claimDetails,
+                              [claimType]: { amount: 0, description: '' }
+                            });
+                          }
+                        } else {
+                          // Remove from selected types
+                          setSelectedClaimTypes(selectedClaimTypes.filter(t => t !== claimType));
+                          
+                          // Remove from claim details
+                          const newDetails = {...claimDetails};
+                          delete newDetails[claimType];
+                          setClaimDetails(newDetails);
+                        }
+                        
+                        // Update form values
+                        const formattedDetails = Object.entries(claimDetails).map(([type, detail]) => ({
+                          type,
+                          amount: detail.amount,
+                          description: detail.description
+                        }));
+                        
+                        form.setValue("claimDetails", formattedDetails);
+                        form.setValue("claimType", selectedClaimTypes.join(","));
+                        form.setValue("amount", calculateTotal());
+                      }}
+                      className="mt-1"
+                    />
+                    <div className="ml-3 flex-1">
+                      <label htmlFor={`claim-type-${claimType}`} className="font-medium cursor-pointer">
+                        {claimType}
+                      </label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {claimType === "Insurance" && "For health and liability insurance fees"}
+                        {claimType === "Tuition Fee" && "For university or language center fees"}
+                        {claimType === "Practical Allowance" && "For internship or practical training periods"}
+                        {claimType === "Flight Ticket" && "For return flights at the end of studies"}
+                        {claimType === "End of Study Allowance" && "Final allowance upon completion of studies"}
+                        {claimType === "Other" && "For other eligible expenses"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {isSelected && (
+                    <div className="mt-3 ml-8 space-y-3">
+                      <div>
+                        <label className="text-sm font-medium">Amount (€)</label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          step="0.01"
+                          value={detail.amount || ''}
+                          onChange={(e) => {
+                            const amount = parseFloat(e.target.value) || 0;
+                            const newDetails = {
+                              ...claimDetails,
+                              [claimType]: {
+                                ...detail,
+                                amount
+                              }
+                            };
+                            setClaimDetails(newDetails);
+                            
+                            // Update form values
+                            const formattedDetails = Object.entries(newDetails).map(([type, detail]) => ({
+                              type,
+                              amount: detail.amount,
+                              description: detail.description
+                            }));
+                            
+                            form.setValue("claimDetails", formattedDetails);
+                            form.setValue("amount", calculateTotal() + amount - (detail.amount || 0));
+                          }}
+                          className="max-w-xs"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Description (Optional)</label>
+                        <Input
+                          type="text"
+                          placeholder="Additional details for this claim type"
+                          value={detail.description || ''}
+                          onChange={(e) => {
+                            const newDetails = {
+                              ...claimDetails,
+                              [claimType]: {
+                                ...detail,
+                                description: e.target.value
+                              }
+                            };
+                            setClaimDetails(newDetails);
+                            
+                            // Update form values
+                            const formattedDetails = Object.entries(newDetails).map(([type, detail]) => ({
+                              type,
+                              amount: detail.amount,
+                              description: detail.description
+                            }));
+                            
+                            form.setValue("claimDetails", formattedDetails);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            
             <FormField
               control={form.control}
-              name="amount"
-              render={({ field }) => (
+              name="claimDetails"
+              render={() => (
                 <FormItem>
-                  <FormLabel>Amount (€)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
+        </div>
+        
+        {/* Claim Details Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-3">Claim Summary</h3>
+          
+          <div className="border rounded-lg p-4 bg-gray-50 mb-4">
+            <div className="flex justify-between items-center">
+              <h4 className="font-medium">Total Amount:</h4>
+              <span className="text-lg font-semibold">€{calculateTotal().toFixed(2)}</span>
+            </div>
+            
+            {selectedClaimTypes.length > 0 && (
+              <div className="mt-3">
+                <h5 className="text-sm font-medium mb-2">Breakdown:</h5>
+                <ul className="text-sm space-y-1">
+                  {selectedClaimTypes.map(type => (
+                    <li key={type} className="flex justify-between">
+                      <span>{type}</span>
+                      <span>€{claimDetails[type]?.amount.toFixed(2) || "0.00"}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            {/* Hidden fields to store the calculated values */}
+            <input type="hidden" {...form.register("amount")} />
+            <input type="hidden" {...form.register("claimType")} />
+            
             
             <FormField
               control={form.control}
