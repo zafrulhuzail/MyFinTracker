@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -94,37 +94,52 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
+                  <Bell className={cn("h-5 w-5", unreadNotifications.length > 0 ? "text-primary" : "")} />
                   {unreadNotifications.length > 0 && (
-                    <span className="absolute top-1 right-1 h-4 w-4 flex items-center justify-center rounded-full bg-red-500 text-white text-xs">
+                    <span className="absolute top-0 right-0 h-5 w-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-semibold">
                       {unreadNotifications.length}
                     </span>
                   )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] max-w-[320px] lg:w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <div className="flex items-center justify-between px-2 py-1.5">
+                  <DropdownMenuLabel className="px-0 py-0">Notifications</DropdownMenuLabel>
+                  {unreadNotifications.length > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full">
+                      {unreadNotifications.length} new
+                    </span>
+                  )}
+                </div>
                 <DropdownMenuSeparator />
-                {notifications && notifications.length > 0 ? (
-                  notifications.slice(0, 5).map((notification) => (
-                    <DropdownMenuItem 
-                      key={notification.id} 
-                      className="cursor-pointer p-0"
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <Card className={cn(
-                        "w-full p-3 border-l-4",
-                        !notification.isRead ? "border-l-primary bg-primary/5" : "border-l-gray-200"
-                      )}>
-                        <div className="font-medium mb-1">{notification.title}</div>
-                        <div className="text-sm text-gray-600 mb-1">{notification.message}</div>
-                        <div className="text-xs text-gray-500">{formatDate(notification.createdAt.toString())}</div>
-                      </Card>
-                    </DropdownMenuItem>
-                  ))
-                ) : (
-                  <DropdownMenuItem disabled>No notifications</DropdownMenuItem>
-                )}
+                
+                <div className="max-h-[300px] overflow-y-auto">
+                  {notifications && notifications.length > 0 ? (
+                    notifications.slice(0, 8).map((notification) => (
+                      <DropdownMenuItem 
+                        key={notification.id} 
+                        className="cursor-pointer p-0"
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <Card className={cn(
+                          "w-full p-3 border-l-4",
+                          !notification.isRead ? "border-l-primary bg-primary/5" : "border-l-gray-200"
+                        )}>
+                          <div className="font-medium mb-1">{notification.title}</div>
+                          <div className="text-sm text-gray-600 mb-1">{notification.message}</div>
+                          <div className="text-xs text-gray-500">{formatDate(notification.createdAt.toString())}</div>
+                        </Card>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled>No notifications</DropdownMenuItem>
+                  )}
+                </div>
+                
+                <DropdownMenuSeparator />
+                <a href="/notifications" className="block w-full px-2 py-1.5 text-center text-primary font-medium hover:bg-gray-100 rounded-sm">
+                  View all notifications
+                </a>
               </DropdownMenuContent>
             </DropdownMenu>
             
@@ -149,37 +164,52 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
+                <Bell className={cn("h-5 w-5", unreadNotifications.length > 0 ? "text-primary" : "")} />
                 {unreadNotifications.length > 0 && (
-                  <span className="absolute top-1 right-1 h-4 w-4 flex items-center justify-center rounded-full bg-red-500 text-white text-xs">
+                  <span className="absolute top-0 right-0 h-5 w-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-semibold">
                     {unreadNotifications.length}
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] max-w-[320px]">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <DropdownMenuLabel className="px-0 py-0">Notifications</DropdownMenuLabel>
+                {unreadNotifications.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full">
+                    {unreadNotifications.length} new
+                  </span>
+                )}
+              </div>
               <DropdownMenuSeparator />
-              {notifications && notifications.length > 0 ? (
-                notifications.slice(0, 5).map((notification) => (
-                  <DropdownMenuItem 
-                    key={notification.id} 
-                    className="cursor-pointer p-0"
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <Card className={cn(
-                      "w-full p-3 border-l-4",
-                      !notification.isRead ? "border-l-primary bg-primary/5" : "border-l-gray-200"
-                    )}>
-                      <div className="font-medium mb-1">{notification.title}</div>
-                      <div className="text-sm text-gray-600 mb-1">{notification.message}</div>
-                      <div className="text-xs text-gray-500">{formatDate(notification.createdAt.toString())}</div>
-                    </Card>
-                  </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>No notifications</DropdownMenuItem>
-              )}
+              
+              <div className="max-h-[300px] overflow-y-auto">
+                {notifications && notifications.length > 0 ? (
+                  notifications.slice(0, 8).map((notification) => (
+                    <DropdownMenuItem 
+                      key={notification.id} 
+                      className="cursor-pointer p-0"
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <Card className={cn(
+                        "w-full p-3 border-l-4",
+                        !notification.isRead ? "border-l-primary bg-primary/5" : "border-l-gray-200"
+                      )}>
+                        <div className="font-medium mb-1">{notification.title}</div>
+                        <div className="text-sm text-gray-600 mb-1">{notification.message}</div>
+                        <div className="text-xs text-gray-500">{formatDate(notification.createdAt.toString())}</div>
+                      </Card>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>No notifications</DropdownMenuItem>
+                )}
+              </div>
+              
+              <DropdownMenuSeparator />
+              <a href="/notifications" className="block w-full px-2 py-1.5 text-center text-primary font-medium hover:bg-gray-100 rounded-sm">
+                View all notifications
+              </a>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
