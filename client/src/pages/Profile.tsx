@@ -366,15 +366,7 @@ export default function Profile() {
           </Card>
           
           {/* Account Actions */}
-          <div className="mt-6 space-y-3">
-            <Button variant="outline" className="w-full py-3 flex items-center justify-center font-medium">
-              <span className="material-icons mr-2">help</span> Help & Support
-            </Button>
-            
-            <Button variant="outline" className="w-full py-3 flex items-center justify-center font-medium">
-              <span className="material-icons mr-2">settings</span> Settings
-            </Button>
-            
+          <div className="mt-6 space-y-3">           
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" className="w-full py-3 text-error flex items-center justify-center font-medium">
