@@ -3,12 +3,29 @@ import path from 'path';
 import fs from 'fs';
 
 // Create uploads directory if it doesn't exist
-const uploadDir = path.join(process.cwd(), 'public/uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log(`Created upload directory at: ${uploadDir}`);
-} else {
-  console.log(`Upload directory exists at: ${uploadDir}`);
+// In production (Render.com), use a dedicated uploads directory that persists across deployments
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? path.join(process.env.UPLOAD_DIR || '/var/uploads', 'mara-claims') 
+  : path.join(process.cwd(), 'public/uploads');
+
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log(`Created upload directory at: ${uploadDir}`);
+  } else {
+    console.log(`Upload directory exists at: ${uploadDir}`);
+  }
+} catch (error) {
+  console.error(`Error creating upload directory: ${error}`);
+  // Fallback to temp directory if needed
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Using fallback upload directory');
+    const fallbackDir = path.join(process.cwd(), 'public/uploads');
+    
+    if (!fs.existsSync(fallbackDir)) {
+      fs.mkdirSync(fallbackDir, { recursive: true });
+    }
+  }
 }
 
 // Configure multer storage

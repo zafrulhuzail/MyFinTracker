@@ -10,31 +10,54 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static files from /public/uploads directory
-const uploadsPath = path.join(process.cwd(), 'public/uploads');
-console.log(`Setting up static file serving from: ${uploadsPath}`);
-app.use('/uploads', express.static(uploadsPath, {
-  // Increase caching to improve performance
-  maxAge: '1h',
-  // Set proper content types for common file types
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.pdf')) {
-      res.setHeader('Content-Type', 'application/pdf');
-      // Set content disposition for PDFs to improve embedding
-      res.setHeader('Content-Disposition', 'inline; filename=' + path.basename(filePath));
-      // Add headers needed for PDF embedding
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-    } else if (filePath.match(/\.(jpe?g)$/i)) {
-      res.setHeader('Content-Type', 'image/jpeg');
-    } else if (filePath.match(/\.(png)$/i)) {
-      res.setHeader('Content-Type', 'image/png');
-    }
-    // Enable CORS for file access
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+// Determine upload path based on environment
+const uploadsPath = process.env.NODE_ENV === 'production' 
+  ? path.join(process.env.UPLOAD_DIR || '/var/uploads', 'mara-claims')
+  : path.join(process.cwd(), 'public/uploads');
+
+// Also set up a fallback path in case the primary path is unavailable in production
+const fallbackUploadsPath = path.join(process.cwd(), 'public/uploads');
+
+// Make sure we serve both paths in production
+if (process.env.NODE_ENV === 'production' && uploadsPath !== fallbackUploadsPath) {
+  console.log(`Setting up static file serving from production path: ${uploadsPath}`);
+  app.use('/uploads', express.static(uploadsPath, {
+    maxAge: '1h',
+    setHeaders: setupFileHeaders
+  }));
+  
+  // Add fallback static serving for files that might be in the fallback directory
+  console.log(`Setting up fallback static file serving from: ${fallbackUploadsPath}`);
+  app.use('/uploads', express.static(fallbackUploadsPath, {
+    maxAge: '1h',
+    setHeaders: setupFileHeaders
+  }));
+} else {
+  console.log(`Setting up static file serving from: ${uploadsPath}`);
+  app.use('/uploads', express.static(uploadsPath, {
+    maxAge: '1h',
+    setHeaders: setupFileHeaders
+  }));
+}
+
+// Helper function for setting appropriate headers
+function setupFileHeaders(res: express.Response, filePath: string) {
+  if (filePath.endsWith('.pdf')) {
+    res.setHeader('Content-Type', 'application/pdf');
+    // Set content disposition for PDFs to improve embedding
+    res.setHeader('Content-Disposition', 'inline; filename=' + path.basename(filePath));
+    // Add headers needed for PDF embedding
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  } else if (filePath.match(/\.(jpe?g)$/i)) {
+    res.setHeader('Content-Type', 'image/jpeg');
+  } else if (filePath.match(/\.(png)$/i)) {
+    res.setHeader('Content-Type', 'image/png');
   }
-}));
+  // Enable CORS for file access
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+}
 
 // Set up session middleware with PostgreSQL storage
 const PgSession = connectPgSimple(session);
@@ -49,8 +72,14 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === "production",
-    maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
-  }
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax',
+    httpOnly: true,
+    // Allow Render.com domains and custom domains
+    domain: process.env.NODE_ENV === "production" ? process.env.COOKIE_DOMAIN : undefined
+  },
+  // Set proxy for correct cookie handling behind load balancers (Render.com uses them)
+  proxy: process.env.NODE_ENV === "production"
 }));
 
 app.use((req, res, next) => {

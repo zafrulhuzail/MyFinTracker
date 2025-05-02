@@ -3,9 +3,15 @@ services:
   - type: web
     name: mara-claim-system
     env: node
-    buildCommand: npm install && npm run build
+    plan: starter # Use at least starter plan for disk storage
+    buildCommand: npm install && npm run build && chmod +x migrate.js && node migrate.js
     startCommand: npm run start
     healthCheckPath: /api/health
+    # Disk configuration for persistent file storage
+    disk:
+      name: uploads
+      mountPath: /var/uploads
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -17,6 +23,8 @@ services:
           property: connectionString
       - key: SESSION_SECRET
         generateValue: true
+      - key: UPLOAD_DIR
+        value: /var/uploads
 
   # Database configuration
 databases:
