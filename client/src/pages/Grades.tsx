@@ -9,6 +9,7 @@ import CourseForm from "@/components/grade/CourseForm";
 import StudyPlanTable from "@/components/grade/StudyPlanTable";
 import StudyPlanForm from "@/components/grade/StudyPlanForm";
 import DocumentUploader from "@/components/grade/DocumentUploader";
+import AcademicRecordForm from "@/components/grade/AcademicRecordForm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
@@ -54,6 +55,7 @@ export default function Grades() {
   
   const [isAddingCourse, setIsAddingCourse] = useState(false);
   const [isAddingStudyPlan, setIsAddingStudyPlan] = useState(false);
+  const [isAddingSemester, setIsAddingSemester] = useState(false);
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [selectedAcademicRecord, setSelectedAcademicRecord] = useState<AcademicRecord | null>(null);
   const [selectedStudyPlan, setSelectedStudyPlan] = useState<StudyPlan | null>(null);
@@ -98,6 +100,33 @@ export default function Grades() {
       setCurrentRecord(null);
     }
   }, [academicRecords]);
+  
+  // Mutation for adding a new academic record (semester)
+  const addAcademicRecordMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/academic-records", data);
+      return response.json();
+    },
+    onSuccess: (newRecord) => {
+      toast({
+        title: "Semester added successfully",
+        description: `${newRecord.semester} ${newRecord.year} has been added to your records`,
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/api/academic-records"] });
+      
+      // Close dialog
+      setIsAddingSemester(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to add semester",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
   
   // Mutation for adding a new course
   const addCourseMutation = useMutation({
@@ -277,6 +306,14 @@ export default function Grades() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
               <h3 className="text-lg font-medium">Semester Results</h3>
               <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={() => setIsAddingSemester(true)}
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none text-xs sm:text-sm"
+                >
+                  Add New Semester
+                </Button>
                 {academicRecords.length > 0 && currentRecord && (
                   <>
                     <Button
