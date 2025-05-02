@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '../test-utils';
 import { mockClaim } from '../mocks/handlers';
-import ClaimCard from '@/components/claim/ClaimCard';
+import ClaimCard from '../../client/src/components/claim/ClaimCard';
+import React from 'react';
 
 // Mock wouter's useLocation
 vi.mock('wouter', async () => {

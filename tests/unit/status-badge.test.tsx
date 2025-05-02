@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { StatusBadge } from '@/components/ui/status-badge';
+import React from 'react';
+import { StatusBadge } from '../../client/src/components/ui/status-badge';
 
 describe('StatusBadge Component', () => {
   it('renders with pending status correctly', () => {

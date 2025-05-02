@@ -3,7 +3,7 @@ import {
   loginSchema, 
   claimFormSchema,
   academicRecordFormSchema
-} from '@/lib/validators';
+} from '../../client/src/lib/validators';
 
 describe('Validators', () => {
   describe('loginSchema', () => {
