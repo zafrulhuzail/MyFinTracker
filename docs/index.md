@@ -8,9 +8,11 @@ Welcome to the comprehensive documentation for MyFinTracker. This documentation 
 
 2. [**Component Visuals**](component-visuals.md) - Visual representations of application components, layouts, and flows
 
-3. [**TypeScript Guide**](typescript-guide.md) - Introduction to TypeScript concepts used in the application
+3. [**UML/Class Diagram**](uml-class-diagram.md) - Detailed UML class diagrams showing relationships between components and data models
 
-4. [**Testing Guide**](testing-guide.md) - Guide to the testing framework and how to write tests
+4. [**TypeScript Guide**](typescript-guide.md) - Introduction to TypeScript concepts used in the application
+
+5. [**Testing Guide**](testing-guide.md) - Guide to the testing framework and how to write tests
 
 ## Quick Start
 
