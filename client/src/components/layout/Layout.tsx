@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
-import { Bell } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Notification } from "@shared/schema";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 interface LayoutProps {
   children: ReactNode;
@@ -36,6 +37,7 @@ function formatDate(dateString: string) {
 export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { mobileMenuOpen, setMobileMenuOpen } = useSidebar();
   
   // Don't render layout on login and register pages
   if (location === "/login" || location === "/register") {
@@ -97,8 +99,20 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
           </div>
         </header>
         
-        {/* Mobile Header Actions - shows notifications on mobile */}
-        <div className="fixed top-0 right-0 h-[64px] flex items-center pr-4 z-40 lg:hidden">
+        {/* Mobile Header - contains menu toggle and notifications */}
+        <div className="fixed top-0 left-0 right-0 h-[64px] flex items-center justify-between px-4 z-40 bg-white border-b border-gray-200 lg:hidden">
+          <div className="flex items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setMobileMenuOpen(prev => !prev)}
+              aria-label="Toggle menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="ml-3 text-lg font-semibold">{title}</h1>
+          </div>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">

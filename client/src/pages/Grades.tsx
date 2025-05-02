@@ -223,7 +223,7 @@ export default function Grades() {
                 <Skeleton className="h-10 w-full" />
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-gray-500 text-sm">Current GPA/Note</p>
                   <p className="text-2xl font-bold text-primary">{currentGPA}</p>
@@ -232,12 +232,12 @@ export default function Grades() {
                   <p className="text-gray-500 text-sm">ECTS Credits</p>
                   <p className="text-2xl font-bold text-primary">{totalCredits}</p>
                 </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Current Semester</p>
+                <div className="col-span-1 sm:col-span-2">
+                  <p className="text-gray-500 text-sm mb-1">Current Semester</p>
                   {academicRecords.length > 0 ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <select 
-                        className="text-sm border rounded px-2 py-1"
+                        className="text-sm border rounded px-2 py-1 w-full max-w-[200px]"
                         value={currentRecord?.id || ""}
                         onChange={(e) => {
                           const selectedId = parseInt(e.target.value);
@@ -259,7 +259,7 @@ export default function Grades() {
                     <p className="font-medium">N/A</p>
                   )}
                 </div>
-                <div>
+                <div className="col-span-1 sm:col-span-2">
                   <p className="text-gray-500 text-sm">Study Progress</p>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                     <div 
@@ -274,21 +274,23 @@ export default function Grades() {
           
           {/* Semester Grades Section */}
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
               <h3 className="text-lg font-medium">Semester Results</h3>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                 {academicRecords.length > 0 && currentRecord && (
                   <>
                     <Button
                       onClick={() => handleAddCourse(currentRecord)}
                       size="sm"
                       variant="outline"
+                      className="flex-1 sm:flex-none text-xs sm:text-sm"
                     >
                       Add Course Manually
                     </Button>
                     <Button
                       onClick={() => setUploadingDocument(true)}
                       size="sm"
+                      className="flex-1 sm:flex-none text-xs sm:text-sm"
                     >
                       Upload Grades Document
                     </Button>
@@ -325,12 +327,13 @@ export default function Grades() {
           
           {/* Study Plan Section */}
           <div>
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
               <h3 className="text-lg font-medium">Study Plan</h3>
               <Button
                 onClick={handleAddStudyPlan}
                 size="sm"
                 variant={studyPlans.length > 0 ? "outline" : "default"}
+                className="w-full sm:w-auto"
               >
                 Add Semester Plan
               </Button>

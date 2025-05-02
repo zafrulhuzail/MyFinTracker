@@ -198,6 +198,7 @@ export default function Sidebar() {
                 label="Profile"
                 icon={<User size={20} />}
                 active={location === "/profile"}
+                onClose={closeMobileMenu}
               />
             </>
           )}
