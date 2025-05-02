@@ -39,6 +39,7 @@ This document provides instructions for deploying the MARA Claim System to Rende
      - `PORT`: 10000
      - `SESSION_SECRET`: (generate a secure random string)
      - `UPLOAD_DIR`: /var/uploads
+     - `COOKIE_DOMAIN`: (Your Render.com app domain, e.g., mara-claim-system.onrender.com)
    - **Add a disk**:
      - Name: uploads
      - Mount Path: /var/uploads

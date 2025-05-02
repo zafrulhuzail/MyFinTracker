@@ -25,6 +25,8 @@ services:
         generateValue: true
       - key: UPLOAD_DIR
         value: /var/uploads
+      - key: COOKIE_DOMAIN
+        sync: false # This will be prompted during deployment
 
   # Database configuration
 databases:
