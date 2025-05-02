@@ -2,37 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fix double scrollbar issue */
-html, body {
+/* Super-aggressive fix for double scrollbar issue */
+html, body, #root {
+  position: fixed;
   overflow: hidden;
   height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-body {
-  overflow-x: hidden;
+/* Block all scrolling in all common containers */
+body, div, section, article, aside, nav, header, footer {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }
 
-/* Ensure only one scrollable container */
-#root {
-  height: 100%;
-  overflow: hidden;
+/* Hide scrollbars but allow scrolling for webkit browsers */
+body::-webkit-scrollbar,
+div::-webkit-scrollbar,
+section::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+  width: 0;
+  height: 0;
 }
 
-/* Make only the main content area scrollable */
-main {
-  overflow-y: auto;
-  height: 100%;
-  overflow-x: hidden; /* Prevent horizontal scrollbar */
+/* Main content - ONLY place where scrolling is allowed */
+main, #main-content {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: calc(100vh - 64px) !important;
+  width: 100% !important;
+  max-height: calc(100vh - 64px) !important;
 }
 
-/* Remove any potential overflow from the App container */
-.flex-col, .flex-row {
-  overflow: visible;
+/* Only specific containers can have scrolling */
+.overflow-y-auto, 
+.overflow-auto {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
-/* Fix double scroll issues in components */
-.overflow-auto, .overflow-y-auto {
-  overflow-x: hidden; /* Prevent horizontal scrollbar */
+/* Override Tailwind classes that might cause scrolling issues */
+.h-screen {
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 :root {

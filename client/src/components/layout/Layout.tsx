@@ -81,10 +81,10 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const unreadNotifications = notifications?.filter(n => !n.isRead) || [];
   
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col pt-[64px] lg:pt-0 overflow-hidden">
+      <div className="flex-1 flex flex-col pt-[64px] lg:pt-0">
         {/* Top Header - visible only on desktop */}
         <header className="bg-white border-b border-gray-200 h-16 flex-shrink-0 flex items-center px-4 lg:px-6 z-20 hidden lg:flex">
           <h1 className="text-lg lg:text-xl font-semibold">{title}</h1>
@@ -214,8 +214,8 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
           </DropdownMenu>
         </div>
         
-        {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+        {/* Main Content - The ONLY scrollable area */}
+        <main id="main-content" className="w-full p-4 lg:p-6">
           {children}
         </main>
       </div>
