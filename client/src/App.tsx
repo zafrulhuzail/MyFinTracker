@@ -20,6 +20,7 @@ import ClaimDetails from "@/pages/ClaimDetails";
 import StudentDirectory from "@/pages/StudentDirectory";
 import ClaimsManagement from "@/pages/ClaimsManagement";
 import FileUploadTest from "@/pages/FileUploadTest";
+import Notifications from "@/pages/Notifications";
 
 function ProtectedRoutes() {
   const { user, isLoading, isAdmin } = useAuth();
@@ -46,6 +47,7 @@ function ProtectedRoutes() {
             <Route path="/admin/claims" component={ClaimsManagement} />
             <Route path="/claims/:id" component={ClaimDetails} />
             <Route path="/profile" component={Profile} />
+            <Route path="/notifications" component={Notifications} />
             <Route path="/upload-test" component={FileUploadTest} />
             <Route path="/" component={AdminDashboard} />
           </>
@@ -58,6 +60,7 @@ function ProtectedRoutes() {
             <Route path="/grades" component={Grades} />
             <Route path="/profile" component={Profile} />
             <Route path="/claims/:id" component={ClaimDetails} />
+            <Route path="/notifications" component={Notifications} />
             <Route path="/upload-test" component={FileUploadTest} />
           </>
         )}
