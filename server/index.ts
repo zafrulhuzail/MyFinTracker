@@ -144,6 +144,36 @@ app.use((req, res, next) => {
     } else {
       console.log("Admin user already exists:", adminUser.id);
     }
+
+    // Ensure student user exists
+    let studentUser = await storage.getUserByUsername("student");
+    if (!studentUser) {
+      console.log("Creating student user...");
+      studentUser = await storage.createUser({
+        username: "student",
+        password: "student123",
+        email: "student@mara.example.com",
+        fullName: "MARA Student",
+        nationalId: "STUDENT123",
+        maraId: "MARA-STUDENT-001",
+        phoneNumber: "+1234567891",
+        currentAddress: "Student Dormitory",
+        countryOfStudy: "Malaysia",
+        university: "MARA University",
+        fieldOfStudy: "Engineering",
+        degreeLevel: "Bachelor",
+        maraGroup: "Engineering",
+        sponsorshipPeriod: "2023-2027",
+        bankName: "Student Bank",
+        bankAddress: "Student Bank HQ, Kuala Lumpur",
+        accountNumber: "STUDENT-ACCOUNT-001",
+        swiftCode: "STUDENTBANKXXX",
+        role: "student"
+      });
+      console.log("Student user created:", studentUser.id);
+    } else {
+      console.log("Student user already exists:", studentUser.id);
+    }
   } catch (error) {
     console.error("Error creating admin user:", error);
   }
