@@ -355,7 +355,7 @@ export default function Grades() {
             ) : (
               <Card className="p-4 text-center">
                 <p className="text-gray-500">No academic records found</p>
-                <Button className="mt-3" onClick={() => setIsAddingCourse(true)}>
+                <Button className="mt-3" onClick={() => setIsAddingSemester(true)}>
                   Add First Semester
                 </Button>
               </Card>
@@ -402,10 +402,7 @@ export default function Grades() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {selectedAcademicRecord 
-                ? `Add Course to ${selectedAcademicRecord.semester} ${selectedAcademicRecord.year}`
-                : "Add New Semester"
-              }
+              Add Course to {selectedAcademicRecord?.semester} {selectedAcademicRecord?.year}
             </DialogTitle>
             <DialogDescription>
               Enter the details of your course
@@ -495,6 +492,32 @@ export default function Grades() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Semester Dialog */}
+      <Dialog open={isAddingSemester} onOpenChange={setIsAddingSemester}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Semester</DialogTitle>
+            <DialogDescription>
+              Enter the details of your academic semester
+            </DialogDescription>
+          </DialogHeader>
+          
+          <AcademicRecordForm
+            onSubmit={(data) => {
+              // Ensure the userId is set
+              if (user) {
+                const formattedData = {
+                  ...data,
+                  userId: user.id,
+                };
+                addAcademicRecordMutation.mutate(formattedData);
+              }
+            }}
+            isLoading={addAcademicRecordMutation.isPending}
+          />
         </DialogContent>
       </Dialog>
       
