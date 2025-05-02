@@ -160,6 +160,30 @@ export default function Grades() {
     },
   });
   
+  // Mutation for deleting a study plan
+  const deleteStudyPlanMutation = useMutation({
+    mutationFn: async (planId: number) => {
+      const response = await apiRequest("DELETE", `/api/study-plans/${planId}`);
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Study plan deleted",
+        description: "Your study plan has been deleted successfully",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/api/study-plans"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete study plan",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+  
   const handleAddCourse = (academicRecord: AcademicRecord) => {
     setSelectedAcademicRecord(academicRecord);
     setIsAddingCourse(true);
@@ -168,6 +192,17 @@ export default function Grades() {
   const handleAddStudyPlan = () => {
     setSelectedStudyPlan(null);
     setIsAddingStudyPlan(true);
+  };
+  
+  const handleEditStudyPlan = (plan: StudyPlan) => {
+    setSelectedStudyPlan(plan);
+    setIsAddingStudyPlan(true);
+  };
+  
+  const handleDeleteStudyPlan = (planId: number) => {
+    if (confirm("Are you sure you want to delete this study plan?")) {
+      deleteStudyPlanMutation.mutate(planId);
+    }
   };
   
   return (
@@ -304,7 +339,11 @@ export default function Grades() {
               {isLoadingPlans ? (
                 <Skeleton className="h-32 w-full" />
               ) : studyPlans.length > 0 ? (
-                <StudyPlanTable studyPlans={studyPlans} />
+                <StudyPlanTable 
+                  studyPlans={studyPlans} 
+                  onEditPlan={handleEditStudyPlan}
+                  onDeletePlan={handleDeleteStudyPlan}
+                />
               ) : (
                 <div className="text-center py-4">
                   <p className="text-gray-500">No study plan defined yet</p>
@@ -437,7 +476,40 @@ export default function Grades() {
               if (!selectedStudyPlan && user) {
                 data.userId = user.id;
               }
-              addStudyPlanMutation.mutate(data);
+              
+              if (selectedStudyPlan) {
+                // Update existing plan
+                const updateData = {
+                  ...data,
+                  id: selectedStudyPlan.id,
+                };
+                
+                // Use the update API endpoint
+                apiRequest("PUT", `/api/study-plans/${selectedStudyPlan.id}`, updateData)
+                  .then(() => {
+                    toast({
+                      title: "Study plan updated",
+                      description: "Your study plan has been updated successfully",
+                    });
+                    
+                    // Invalidate related queries
+                    queryClient.invalidateQueries({ queryKey: ["/api/study-plans"] });
+                    
+                    // Close dialog
+                    setIsAddingStudyPlan(false);
+                    setSelectedStudyPlan(null);
+                  })
+                  .catch(error => {
+                    toast({
+                      title: "Failed to update study plan",
+                      description: error.message || "An error occurred",
+                      variant: "destructive",
+                    });
+                  });
+              } else {
+                // Create new plan
+                addStudyPlanMutation.mutate(data);
+              }
             }}
             isLoading={addStudyPlanMutation.isPending}
             existingPlan={selectedStudyPlan || undefined}
