@@ -10,54 +10,31 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Determine upload path based on environment
-const uploadsPath = process.env.NODE_ENV === 'production' 
-  ? path.join(process.env.UPLOAD_DIR || '/var/uploads', 'mara-claims')
-  : path.join(process.cwd(), 'public/uploads');
-
-// Also set up a fallback path in case the primary path is unavailable in production
-const fallbackUploadsPath = path.join(process.cwd(), 'public/uploads');
-
-// Make sure we serve both paths in production
-if (process.env.NODE_ENV === 'production' && uploadsPath !== fallbackUploadsPath) {
-  console.log(`Setting up static file serving from production path: ${uploadsPath}`);
-  app.use('/uploads', express.static(uploadsPath, {
-    maxAge: '1h',
-    setHeaders: setupFileHeaders
-  }));
-  
-  // Add fallback static serving for files that might be in the fallback directory
-  console.log(`Setting up fallback static file serving from: ${fallbackUploadsPath}`);
-  app.use('/uploads', express.static(fallbackUploadsPath, {
-    maxAge: '1h',
-    setHeaders: setupFileHeaders
-  }));
-} else {
-  console.log(`Setting up static file serving from: ${uploadsPath}`);
-  app.use('/uploads', express.static(uploadsPath, {
-    maxAge: '1h',
-    setHeaders: setupFileHeaders
-  }));
-}
-
-// Helper function for setting appropriate headers
-function setupFileHeaders(res: express.Response, filePath: string) {
-  if (filePath.endsWith('.pdf')) {
-    res.setHeader('Content-Type', 'application/pdf');
-    // Set content disposition for PDFs to improve embedding
-    res.setHeader('Content-Disposition', 'inline; filename=' + path.basename(filePath));
-    // Add headers needed for PDF embedding
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-  } else if (filePath.match(/\.(jpe?g)$/i)) {
-    res.setHeader('Content-Type', 'image/jpeg');
-  } else if (filePath.match(/\.(png)$/i)) {
-    res.setHeader('Content-Type', 'image/png');
+// Serve static files from /public/uploads directory
+const uploadsPath = path.join(process.cwd(), 'public/uploads');
+console.log(`Setting up static file serving from: ${uploadsPath}`);
+app.use('/uploads', express.static(uploadsPath, {
+  // Increase caching to improve performance
+  maxAge: '1h',
+  // Set proper content types for common file types
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+      // Set content disposition for PDFs to improve embedding
+      res.setHeader('Content-Disposition', 'inline; filename=' + path.basename(filePath));
+      // Add headers needed for PDF embedding
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    } else if (filePath.match(/\.(jpe?g)$/i)) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (filePath.match(/\.(png)$/i)) {
+      res.setHeader('Content-Type', 'image/png');
+    }
+    // Enable CORS for file access
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   }
-  // Enable CORS for file access
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-}
+}));
 
 // Set up session middleware with PostgreSQL storage
 const PgSession = connectPgSimple(session);
@@ -72,14 +49,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === "production",
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax',
-    httpOnly: true,
-    // Allow Render.com domains and custom domains
-    domain: process.env.NODE_ENV === "production" ? process.env.COOKIE_DOMAIN : undefined
-  },
-  // Set proxy for correct cookie handling behind load balancers (Render.com uses them)
-  proxy: process.env.NODE_ENV === "production"
+    maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+  }
 }));
 
 app.use((req, res, next) => {
@@ -145,35 +116,35 @@ app.use((req, res, next) => {
       console.log("Admin user already exists:", adminUser.id);
     }
 
-    // Ensure student user exists
-    let studentUser = await storage.getUserByUsername("student");
-    if (!studentUser) {
-      console.log("Creating student user...");
-      studentUser = await storage.createUser({
-        username: "student",
-        password: "student123",
-        email: "student@mara.example.com",
-        fullName: "MARA Student",
-        nationalId: "STUDENT123",
-        maraId: "MARA-STUDENT-001",
-        phoneNumber: "+1234567891",
-        currentAddress: "Student Dormitory",
-        countryOfStudy: "Malaysia",
-        university: "MARA University",
-        fieldOfStudy: "Engineering",
-        degreeLevel: "Bachelor",
-        maraGroup: "Engineering",
-        sponsorshipPeriod: "2023-2027",
-        bankName: "Student Bank",
-        bankAddress: "Student Bank HQ, Kuala Lumpur",
-        accountNumber: "STUDENT-ACCOUNT-001",
-        swiftCode: "STUDENTBANKXXX",
-        role: "student"
-      });
-      console.log("Student user created:", studentUser.id);
-    } else {
-      console.log("Student user already exists:", studentUser.id);
-    }
+     // Ensure student user exists
+     let studentUser = await storage.getUserByUsername("student");
+     if (!studentUser) {
+       console.log("Creating student user...");
+       studentUser = await storage.createUser({
+         username: "student",
+         password: "student123",
+         email: "student@mara.example.com",
+         fullName: "MARA Student",
+         nationalId: "STUDENT123",
+         maraId: "MARA-STUDENT-001",
+         phoneNumber: "+1234567891",
+         currentAddress: "Student Dormitory",
+         countryOfStudy: "Malaysia",
+         university: "MARA University",
+         fieldOfStudy: "Engineering",
+         degreeLevel: "Bachelor",
+         maraGroup: "Engineering",
+         sponsorshipPeriod: "2023-2027",
+         bankName: "Student Bank",
+         bankAddress: "Student Bank HQ, Kuala Lumpur",
+         accountNumber: "STUDENT-ACCOUNT-001",
+         swiftCode: "STUDENTBANKXXX",
+         role: "student"
+       });
+       console.log("Student user created:", studentUser.id);
+     } else {
+       console.log("Student user already exists:", studentUser.id);
+     }
   } catch (error) {
     console.error("Error creating admin user:", error);
   }
@@ -183,26 +154,9 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-    
-    // Log full error details in production for debugging
-    if (process.env.NODE_ENV === 'production') {
-      console.error('[PRODUCTION ERROR]', {
-        status,
-        message,
-        stack: err.stack,
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      console.error('[DEV ERROR]', err);
-    }
 
-    // Always send a clean response to the client
-    res.status(status).json({ 
-      message,
-      status,
-      // Include more details in development
-      ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
-    });
+    res.status(status).json({ message });
+    throw err;
   });
 
   // importantly only setup vite in development and after
@@ -214,14 +168,11 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use PORT from environment variable for production (Render.com) or default to 5000
-  const port = process.env.PORT || 5000;
-  
-  server.listen({
-    port: Number(port),
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  // ALWAYS serve the app on port 5000
+  // this serves both the API and the client.
+  // It is the only port that is not firewalled.
+  const port = 5000;
+  server.listen(port, 'localhost', () => {
     log(`serving on port ${port}`);
   });
 })();
