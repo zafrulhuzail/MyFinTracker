@@ -13,8 +13,7 @@ console.log(`Connecting to database using ${process.env.DATABASE_URL}`);
 
 // Create a PostgreSQL connection pool
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  connectionString: process.env.DATABASE_URL
 });
 
 // Create the drizzle instance
