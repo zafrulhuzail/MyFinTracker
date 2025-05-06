@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    container_name: mara-claim-system
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/mara
+      SESSION_SECRET: your_session_secret_here
+      UPLOAD_DIR: /var/uploads
+      COOKIE_DOMAIN: localhost
+    volumes:
+      - uploads:/var/uploads
+      - ./attached_assets:/app/attached_assets
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: mara-claim-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mara
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  uploads:
+  db_data:
