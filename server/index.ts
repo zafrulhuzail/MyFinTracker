@@ -5,6 +5,7 @@ import session from "express-session";
 import { pool } from "./db";
 import connectPgSimple from "connect-pg-simple";
 import path from "path";
+import fs from 'fs';
 
 const app = express();
 app.use(express.json());
@@ -12,7 +13,14 @@ app.use(express.urlencoded({ extended: false }));
 
 // Serve static files from /public/uploads directory
 const uploadsPath = path.join(process.cwd(), 'public/uploads');
+console.log('Current Working Directory:', process.cwd());
 console.log(`Setting up static file serving from: ${uploadsPath}`);
+
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+  console.log(`Created uploads directory at: ${uploadsPath}`);
+}
+
 app.use('/uploads', express.static(uploadsPath, {
   // Increase caching to improve performance
   maxAge: '1h',
@@ -171,8 +179,10 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen(port, 'localhost', () => {
+  const port = parseInt(process.env.PORT || "5000", 10);
+  const host = process.env.HOST || "localhost";
+  server.listen(port, () => {
+    log(`serving on http://${host}:${port}`);
     log(`serving on port ${port}`);
   });
 })();
