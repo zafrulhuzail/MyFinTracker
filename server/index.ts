@@ -44,6 +44,8 @@ app.use('/uploads', express.static(uploadsPath, {
   }
 }));
 
+app.set('trust proxy', 1);
+
 // Set up session middleware with PostgreSQL storage
 const PgSession = connectPgSimple(session);
 app.use(session({
@@ -56,7 +58,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: 'lax',
     domain: process.env.COOKIE_DOMAIN || undefined,
     httpOnly: true,
