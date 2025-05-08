@@ -37,6 +37,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.post("/auth/login", async (req: Request, res: Response) => {
     try {
       console.log("Login request body:", req.body);
+      console.log("Session before login:", req.session);
+      
       const validatedData = loginSchema.parse(req.body);
       console.log("Validated data:", validatedData);
       
@@ -53,8 +55,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userRole = user.role;
       console.log("Session set for user:", user.id, user.role);
       
+      // Save session explicitly to ensure it persists
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+        }
+        console.log("Session after save:", req.session);
+      });
+      
       const { password, ...userWithoutPassword } = user;
       console.log("Login successful");
+      
+      // Set a custom header to check if the response is properly received
+      res.setHeader('X-Auth-Status', 'success');
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error("Login validation error:", error);
