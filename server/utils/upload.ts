@@ -5,7 +5,7 @@ import fs from 'fs';
 // Create uploads directory if it doesn't exist
 // In production (Render.com), use a dedicated uploads directory that persists across deployments
 const uploadDir = process.env.NODE_ENV === 'production' 
-  ? path.join(process.env.UPLOAD_DIR || '/var/uploads', 'mara-claims') 
+  ? path.join(process.env.UPLOAD_DIR || 'public/uploads') 
   : path.join(process.cwd(), 'public/uploads');
 
 try {
@@ -75,6 +75,7 @@ export const findFileByName = (filename: string): string | null => {
   try {
     // If the file exists exactly as provided, return it as is
     const exactPath = path.join(uploadDir, filename);
+    console.error('file directory:', exactPath);
     if (fs.existsSync(exactPath)) {
       return filename;
     }
