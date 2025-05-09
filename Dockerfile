@@ -27,7 +27,7 @@ EXPOSE 10000
 # Set environment variables for production
 ENV NODE_ENV=production
 ENV PORT=10000
-ENV UPLOAD_DIR=/var/uploads
+ENV UPLOAD_DIR=/app/public/uploads
 
 # Start the application with our custom entrypoint
 ENTRYPOINT ["docker-entrypoint.sh"]
