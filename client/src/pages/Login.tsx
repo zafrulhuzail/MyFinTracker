@@ -22,7 +22,7 @@ export default function Login() {
       {/* Right side - Info section */}
       <div className="hidden lg:flex flex-1 bg-primary text-white">
         <div className="flex flex-col justify-center p-12 max-w-lg mx-auto">
-          <h2 className="text-3xl font-bold mb-6">Manage Your Student Allowance Claims</h2>
+          <h2 className="text-3xl font-bold mb-6">Manage Your Allowance Claims</h2>
           <p className="text-lg mb-8">
             Welcome to <span className="font-bold">MyFinTracker</span> - your comprehensive platform for submitting, tracking, and managing your educational funding requests and academic progress.
           </p>

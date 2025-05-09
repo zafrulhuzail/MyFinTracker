@@ -74,7 +74,7 @@ export default function RegisterForm() {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">MARA Student Registration</CardTitle>
+        <CardTitle className="text-xl font-bold text-center">Create account</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>

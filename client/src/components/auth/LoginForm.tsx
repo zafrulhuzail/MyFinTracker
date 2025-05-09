@@ -57,7 +57,7 @@ export default function LoginForm() {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">MyFinTracker</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">Please enter your login details:</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
