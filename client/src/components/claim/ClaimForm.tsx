@@ -353,7 +353,6 @@ export default function ClaimForm() {
                       error={form.formState.errors.receiptFile?.message}
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
