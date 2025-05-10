@@ -28,11 +28,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
   const apiRouter = express.Router();
   
-  // Health check for deployment monitoring
-  apiRouter.get("/health", (req: Request, res: Response) => {
-    res.status(200).json({ status: "ok" });
-  });
-  
   // Auth routes
   apiRouter.post("/auth/login", async (req: Request, res: Response) => {
     try {
@@ -148,6 +143,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       return res.status(200).json(usersWithoutPasswords);
+    } catch (error) {
+      return res.status(500).json({ message: "Server error", error });
+    }
+  });
+  
+  // Get a specific user by ID (accessible by all authenticated users)
+  apiRouter.get("/users/:id", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove password from the user object
+      const { password, ...userWithoutPassword } = user;
+      return res.status(200).json(userWithoutPassword);
     } catch (error) {
       return res.status(500).json({ message: "Server error", error });
     }
@@ -316,7 +329,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   apiRouter.get("/academic-records", authenticateUser, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.userId!;
+       let userId = req.session.userId!;
+      const userRole = req.session.userRole!;
+      
+      // If an admin is requesting academic records and specifies a studentId, use that instead
+      if (userRole === "admin" && req.query.studentId) {
+        userId = parseInt(req.query.studentId as string);
+      }
+      
       const academicRecords = await storage.getAcademicRecordsByUser(userId);
       return res.status(200).json(academicRecords);
     } catch (error) {

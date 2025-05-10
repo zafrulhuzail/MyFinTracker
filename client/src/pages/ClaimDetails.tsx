@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { Claim, User } from "@shared/schema";
+import { Claim, User, AcademicRecord, Course } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,9 +44,28 @@ export default function ClaimDetails() {
   });
   
   // Fetch student details if admin
-  const { data: student } = useQuery<User>({
+  const { data: student , isLoading: isLoadingStudent} = useQuery<User>({
     queryKey: [`/api/users/${claim?.userId}`],
     enabled: !!claim?.userId && isAdmin,
+  });
+
+  // Fetch academic records for the student
+  const { data: academicRecords, isLoading: isLoadingAcademicRecords } = useQuery<AcademicRecord[]>({
+    queryKey: [
+      `/api/academic-records`, 
+      // When admin is viewing another student's records, pass studentId param
+      isAdmin && student && claim && claim.userId !== user?.id ? { studentId: student.id } : undefined
+    ],
+    enabled: !!student,
+  });
+  
+  // State for tracking which academic record has expanded courses view
+  const [expandedRecordId, setExpandedRecordId] = useState<number | null>(null);
+  
+  // Fetch courses for expanded academic record
+  const { data: courses, isLoading: isLoadingCourses } = useQuery<Course[]>({
+    queryKey: [`/api/academic-records/${expandedRecordId}/courses`],
+    enabled: expandedRecordId !== null,
   });
   
   useEffect(() => {
@@ -107,7 +126,16 @@ export default function ClaimDetails() {
           {/* Claim Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold">{claim.claimType} Claim</h2>
+              <div>
+                <h2 className="text-2xl font-bold">{claim.claimType} Claim</h2>
+                {isLoadingStudent ? (
+                  <Skeleton className="h-5 w-40 mt-1" />
+                ) : student ? (
+                  <p className="text-primary font-medium mt-1">
+                    Student: {student.fullName} ({student.maraId})
+                  </p>
+                ) : null}
+              </div>
               <StatusBadge status={claim.status as any} />
             </div>
             <p className="text-gray-600">Submitted on {formatDate(claim.createdAt)}</p>
@@ -123,8 +151,8 @@ export default function ClaimDetails() {
                 <CardTitle className="text-lg">Student Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div>
                     <p className="text-gray-500 text-sm">Student Name</p>
                     <p className="font-medium">{student.fullName}</p>
                   </div>
@@ -139,6 +167,26 @@ export default function ClaimDetails() {
                   <div>
                     <p className="text-gray-500 text-sm">University</p>
                     <p className="font-medium">{student.university}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Field of Study</p>
+                    <p className="font-medium">{student.fieldOfStudy}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Country of Study</p>
+                    <p className="font-medium">{student.countryOfStudy}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Degree Level</p>
+                    <p className="font-medium">{student.degreeLevel}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">MARA Group</p>
+                    <p className="font-medium">{student.maraGroup}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-sm">Sponsorship Period</p>
+                    <p className="font-medium">{student.sponsorshipPeriod}</p>
                   </div>
                 </div>
               </CardContent>
@@ -305,6 +353,114 @@ export default function ClaimDetails() {
                   <p className="font-medium">{claim.swiftCode}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Academic Records */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+                Academic Records
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingAcademicRecords ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : academicRecords && academicRecords.length > 0 ? (
+                <div className="space-y-6">
+                  {academicRecords.map((record) => (
+                    <div key={record.id} className="border rounded-md p-4">
+                      <div className="flex justify-between mb-3">
+                        <h3 className="font-medium text-lg">{record.semester} {record.year}</h3>
+                        <div className="px-2 py-1 text-sm bg-primary/10 text-primary rounded-md">
+                          GPA: {record.gpa || 'N/A'}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-gray-500 text-sm">ECTS Credits</p>
+                          <p className="font-medium">{record.ectsCredits || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-sm">Status</p>
+                          <p className="font-medium">{record.isCompleted ? 'Completed' : 'In Progress'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* View courses button */}
+                      <div className="mt-4">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setExpandedRecordId(expandedRecordId === record.id ? null : record.id)}
+                          className="w-full flex justify-between items-center"
+                        >
+                          <span>{expandedRecordId === record.id ? 'Hide Courses' : 'View Courses'}</span>
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className={`h-4 w-4 transition-transform ${expandedRecordId === record.id ? 'rotate-180' : ''}`} 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </Button>
+                      </div>
+                      
+                      {/* Courses list */}
+                      {expandedRecordId === record.id && (
+                        <div className="mt-4 pl-4 border-l-2 border-primary/20">
+                          <h4 className="font-medium mb-2">Courses</h4>
+                          {isLoadingCourses ? (
+                            <div className="space-y-2">
+                              <Skeleton className="h-6 w-full" />
+                              <Skeleton className="h-6 w-full" />
+                              <Skeleton className="h-6 w-full" />
+                            </div>
+                          ) : courses && courses.length > 0 ? (
+                            <div className="space-y-3">
+                              {courses.map(course => (
+                                <div key={course.id} className="border rounded-md p-3">
+                                  <div className="flex justify-between items-center">
+                                    <div>
+                                      <p className="font-medium">{course.name}</p>
+                                      <p className="text-sm text-gray-500">
+                                        Credits: {course.credits} · Status: {course.status}
+                                      </p>
+                                    </div>
+                                    {course.grade && (
+                                      <div className="bg-primary/10 text-primary px-2 py-1 rounded-md text-sm font-medium">
+                                        Grade: {course.grade}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm">No courses found for this semester.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-gray-500">No academic records available for this student.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
           
