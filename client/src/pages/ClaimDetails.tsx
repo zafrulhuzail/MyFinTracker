@@ -43,10 +43,10 @@ export default function ClaimDetails() {
     queryKey: [`/api/claims/${id}`],
   });
   
-  // Fetch student details if admin
+  // Fetch student details
   const { data: student , isLoading: isLoadingStudent} = useQuery<User>({
     queryKey: [`/api/users/${claim?.userId}`],
-    enabled: !!claim?.userId && isAdmin,
+    enabled: !!claim?.userId,
   });
 
   // Fetch academic records for the student
