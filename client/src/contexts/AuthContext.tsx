@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
 interface AuthContextType {
-  user: User | null;
+  user: User | null | undefined;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -33,13 +33,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [, setLocation] = useLocation();
   
   // Fetch current user session
-  const { data: user, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading, error } = useQuery<User | null>({
     queryKey: ["/api/auth/me"],
-    onError: () => {
-      // Swallow the error, user is not authenticated
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", "/api/auth/me");
+        return response.json();
+      } catch {
+        // Swallow the error, user is not authenticated
+        return null;
+      }
     },
     retry: false,
-    throwOnError: false,
   });
   
   const isAuthenticated = !!user;
