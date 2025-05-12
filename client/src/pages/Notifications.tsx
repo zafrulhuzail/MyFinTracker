@@ -6,6 +6,7 @@ import { Loader2, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -46,10 +47,22 @@ export default function NotificationsPage() {
     }
   });
   
+  const [, setLocation] = useLocation();
   // Handle notification click to mark as read
-  const handleNotificationClick = (notification: Notification) => {
+ const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
+      
+    }
+    
+    // Extract claim ID from notification message
+    const claimIdMatch = notification.message.match(/claim\s+(?:ID|id|#)?[:\s]*(?:CL)?(\d+)/i);
+    if (claimIdMatch && claimIdMatch[1]) {
+      // Navigate to claim details page
+      setLocation(`/claims/${claimIdMatch[1]}`);
+    } else if (notification.message.toLowerCase().includes('claim')) {
+      // If message mentions claim but no ID found, navigate to claims history
+      setLocation(`/claims/${notification.id}`);
     }
   };
   

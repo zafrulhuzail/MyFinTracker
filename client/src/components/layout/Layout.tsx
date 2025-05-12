@@ -71,10 +71,23 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
     }
   });
   
-  // Handle notification click
+    // Handle notification click
+  const [, setLocation] = useLocation();
+  
   const handleNotificationClick = (notification: Notification) => {
+    // Mark as read
     if (!notification.isRead) {
       markAsReadMutation.mutate(notification.id);
+    }
+    
+    // Extract claim ID from notification message
+    const claimIdMatch = notification.message.match(/claim\s+(?:ID|id|#)?[:\s]*(?:CL)?(\d+)/i);
+    if (claimIdMatch && claimIdMatch[1]) {
+      // Navigate to claim details page
+      setLocation(`/claims/${claimIdMatch[1]}`);
+    } else if (notification.message.toLowerCase().includes('claim')) {
+      // If message mentions claim but no ID found, navigate to claims history
+      setLocation(`/claims/${notification.id}`);
     }
   };
 
