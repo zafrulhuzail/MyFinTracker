@@ -220,7 +220,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId,
         title: "Claim Submitted",
-        message: `Your claim for ${validatedData.claimType} has been submitted and is pending review.`
+        // message: `Your claim for ${validatedData.claimType} with ID: ${newClaim.id} has been submitted and is pending review.`
+        message: `A new claim has been submitted. Claim ID: ${newClaim.id}`
       });
       
       return res.status(201).json(newClaim);
