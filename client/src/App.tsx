@@ -21,6 +21,8 @@ import StudentDirectory from "@/pages/StudentDirectory";
 import ClaimsManagement from "@/pages/ClaimsManagement";
 import FileUploadTest from "@/pages/FileUploadTest";
 import Notifications from "@/pages/Notifications";
+import UploadPage from "@/pages/UploadPage";
+import NewClaimWithUpload from "@/pages/NewClaimWithUpload";
 
 function ProtectedRoutes() {
   const { user, isLoading, isAdmin } = useAuth();
@@ -62,6 +64,8 @@ function ProtectedRoutes() {
             <Route path="/claims/:id" component={ClaimDetails} />
             <Route path="/notifications" component={Notifications} />
             <Route path="/upload-test" component={FileUploadTest} />
+            <Route path="/upload" component={UploadPage} />
+            <Route path="/new-claim-upload" component={NewClaimWithUpload} />
           </>
         )}
         <Route component={NotFound} />

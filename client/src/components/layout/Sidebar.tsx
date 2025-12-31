@@ -170,6 +170,13 @@ export default function Sidebar() {
                 onClose={closeMobileMenu}
               />
               <NavItem
+                to="/new-claim-upload"
+                label="New Claim with Upload"
+                icon={<PlusCircle size={20} />}
+                active={location === "/new-claim-upload"}
+                onClose={closeMobileMenu}
+              />
+              <NavItem
                 to="/history"
                 label="Claim History"
                 icon={<History size={20} />}

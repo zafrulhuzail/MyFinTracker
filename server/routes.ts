@@ -15,6 +15,9 @@ import { sendEmail } from "./utils/email";
 import { authenticateUser, isAdmin } from "./middleware/auth";
 import { upload, getFileUrl, findFileByName } from "./utils/upload";
 import "express-session";
+import fs from "fs";
+import FormData from "form-data";
+import fetch from "node-fetch";
 
 // Extend Express Request type to include session
 declare module "express-session" {
@@ -523,7 +526,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
+apiRouter.post(
+  "/pdf/extract",
+  authenticateUser,
+  upload.array("files", 10),
+  async (req: Request, res: Response) => {
+    try {
+      const files = req.files as Express.Multer.File[] | undefined;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      const extractorUrl =
+        process.env.PDF_EXTRACTOR_URL || "http://localhost:8000/extract";
+
+      const form = new FormData();
+
+      for (const file of files) {
+        form.append("files", fs.createReadStream(file.path), {
+          filename: file.originalname,
+          contentType: file.mimetype || "application/pdf",
+        });
+      }
+
+      const r = await fetch(extractorUrl, {
+        method: "POST",
+        body: form as any,
+        headers: form.getHeaders(),
+      });
+
+      const text = await r.text();
+
+      if (!r.ok) {
+        return res.status(r.status).json({
+          message: "Extractor service error",
+          status: r.status,
+          body: text,
+        });
+      }
+
+      // Must be JSON here
+      return res.status(200).json(JSON.parse(text));
+    } catch (err) {
+      console.error("PDF extract route error:", err);
+      return res.status(500).json({
+        message: "Failed to extract PDF data",
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+);
+
   // Mount API routes
   app.use("/api", apiRouter);
   
