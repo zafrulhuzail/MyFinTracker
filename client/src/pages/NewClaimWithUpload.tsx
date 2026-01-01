@@ -1,27 +1,55 @@
-import { useState } from "react";
-import { extractPdfs } from "@/lib/api";
+import { useMemo, useState } from "react";
+import { extractPdfs, uploadFile } from "@/lib/api";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { persistTranscriptToDb } from "@/lib/persistTranscript";
+import { useToast } from "@/hooks/use-toast";
 
 type ExtractResponse = any;
 
+/**
+ * docs: [{ file_name, classified_as }]
+ * classifiedAs examples: "bank_receipt", "transcript"
+ */
+function pickFileByClassifier(files: File[], docs: any[], classifiedAs: string): File | undefined {
+  const doc = docs?.find((d: any) => d?.classified_as === classifiedAs);
+  if (!doc?.file_name) return undefined;
+  return files.find((f) => f.name === doc.file_name);
+}
+
 export default function NewClaimWithUpload() {
+  // ---------- Hooks ----------
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  // ---------- Upload & extraction state ----------
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ExtractResponse | null>(null);
 
-  // editable fields (user can override AI)
+  // ---------- Submit state ----------
+  const [submitting, setSubmitting] = useState(false);
+
+  // ---------- Claim inputs ----------
+  const [claimType, setClaimType] = useState("Insurance");
   const [claimPeriod, setClaimPeriod] = useState("");
   const [description, setDescription] = useState("");
 
+  // ---------- Derived values ----------
+  const docs: any[] = data?.documents ?? [];
   const money = data?.computed?.money;
   const ectsBySemester = data?.computed?.transcript?.ects_by_semester ?? {};
+  const semesters = useMemo(() => Object.keys(ectsBySemester), [ectsBySemester]);
 
   async function onExtract() {
     setError(null);
-
+    
     if (!files.length) {
       setError("Please select at least one PDF.");
       return;
@@ -37,6 +65,16 @@ export default function NewClaimWithUpload() {
       if (!claimPeriod && semesters.length === 1) {
         setClaimPeriod(semesters[0]);
       }
+
+      // Auto pick claimType based on totals
+      const m = result?.computed?.money;
+      const hasInsurance = Number(m?.insurance_total ?? 0) > 0;
+      const hasTuition = Number(m?.semester_fee_total ?? 0) > 0;
+
+      if (hasTuition && !hasInsurance) setClaimType("Tuition Fee");
+      else if (hasInsurance && !hasTuition) setClaimType("Insurance");
+      else if (hasInsurance || hasTuition) setClaimType("Tuition Fee & Insurance");
+
     } catch (e: any) {
       setError(e?.message || "Failed to extract PDFs");
     } finally {
@@ -45,28 +83,92 @@ export default function NewClaimWithUpload() {
   }
 
   async function onSubmit() {
-    // Next step: wire this to POST /api/claims
-    alert(
-      JSON.stringify(
-        {
-          claimPeriod,
-          description,
-          extractedTotals: money,
-          ectsBySemester,
-        },
-        null,
-        2
-      )
-    );
+    if (!data) {
+      setError("Extract first");
+      return;
+    }
+
+    if (!claimPeriod.trim()) {
+      setError("Claim period required");
+      return;
+    }
+
+    // Bank info comes from user profile (same logic as old ClaimForm)
+    const bankName = user?.bankName ?? "";
+    const bankAddress = user?.bankAddress ?? "";
+    const accountNumber = user?.accountNumber ?? "";
+    const swiftCode = user?.swiftCode ?? "";
+
+    if (!bankName || !bankAddress || !accountNumber || !swiftCode) {
+      setError("Missing bank info");
+      return;
+    }
+
+    const total = Number(money?.grand_total ?? 0);
+    if (!Number.isFinite(total) || total <= 0) {
+      setError("Invalid total");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Upload stored files to Node so we can save receiptFile/supportingDocFile fields
+      const receiptPdf = pickFileByClassifier(files, docs, "bank_receipt") || files[0];
+      const transcriptPdf = pickFileByClassifier(files, docs, "transcript");
+
+      const receiptUpload = await uploadFile(receiptPdf);
+      const transcriptUpload = transcriptPdf ? await uploadFile(transcriptPdf) : null;
+
+      // Create claim
+      const claimPayload = {
+        claimType,
+        amount: total,
+        claimPeriod: claimPeriod.trim(),
+        description: description?.trim() || "",
+        receiptFile: receiptUpload.fileUrl,
+        supportingDocFile: transcriptUpload?.fileUrl || "",
+        bankName,
+        bankAddress,
+        accountNumber,
+        swiftCode,
+      };
+
+      const claimRes = await apiRequest("POST", "/api/claims", claimPayload);
+      if (!claimRes.ok) {
+        const err = await claimRes.text().catch(() => "");
+        throw new Error(err || "Claim submit failed");
+      }
+      const createdClaim = await claimRes.json();
+
+      // save transcript -> academic-records + courses
+      if (data?.computed?.transcript?.semesters && user?.id) {
+        await persistTranscriptToDb({ semesters: data?.computed?.transcript.semesters }, user.id);
+      }
+
+      // Refresh lists
+      queryClient.invalidateQueries({ queryKey: ["/api/claims"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/academic-records"] });
+
+      toast({
+        title: "Submitted",
+        description: `Claim created (ID: ${createdClaim?.id}). Transcript saved.`,
+      });
+
+      setLocation("/history");
+    } catch (e: any) {
+      setError("Submit failed");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <div className="w-full pb-8">
       <div className="px-4 py-6 container mx-auto max-w-4xl space-y-6">
         <div>
-          <h2 className="text-2xl font-bold">New Claim (Upload + Auto-fill)</h2>
+          <h2 className="text-2xl font-bold">New Claim (Upload + Transcript Save)</h2>
           <p className="text-gray-600">
-            Upload your bank receipt and transcript PDFs. We’ll extract totals and semester credits.
+            Upload PDFs (bank receipt + transcript). We extract totals and semesters, then submit claim and save courses.
           </p>
         </div>
 
@@ -92,20 +194,7 @@ export default function NewClaimWithUpload() {
             <Button onClick={onExtract} disabled={loading}>
               {loading ? "Extracting..." : "Extract from PDFs"}
             </Button>
-            {data && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setData(null);
-                  setError(null);
-                }}
-              >
-                Clear
-              </Button>
-            )}
           </div>
-
-          {error && <p className="text-red-600 text-sm">{error}</p>}
         </div>
 
         {/* Extracted summary */}
@@ -130,7 +219,7 @@ export default function NewClaimWithUpload() {
 
             <div className="border rounded p-3">
               <div className="font-medium mb-2">ECTS by semester</div>
-              {Object.keys(ectsBySemester).length === 0 ? (
+              {semesters.length === 0 ? (
                 <p className="text-sm text-gray-600">No transcript data detected.</p>
               ) : (
                 <ul className="text-sm space-y-1">
@@ -143,15 +232,6 @@ export default function NewClaimWithUpload() {
                 </ul>
               )}
             </div>
-
-            <details className="text-sm">
-              <summary className="cursor-pointer text-gray-700">
-                Show raw JSON (debug)
-              </summary>
-              <pre className="mt-2 whitespace-pre-wrap">
-                {JSON.stringify(data, null, 2)}
-              </pre>
-            </details>
           </div>
         )}
 
@@ -178,8 +258,8 @@ export default function NewClaimWithUpload() {
             />
           </div>
 
-          <Button onClick={onSubmit} disabled={!data}>
-            Submit Claim (next step)
+          <Button onClick={onSubmit} disabled={!data || submitting}>
+            {submitting ? "Submitting..." : "Submit Claim + Save Transcript"}
           </Button>
 
           {!data && (
