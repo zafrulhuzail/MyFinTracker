@@ -18,6 +18,8 @@ import "express-session";
 import fs from "fs";
 import FormData from "form-data";
 import fetch from "node-fetch";
+import { ClaimService } from "./services/ClaimService";
+import { PdfExtractionService } from "./services/PdfExtractionService";
 
 // Extend Express Request type to include session
 declare module "express-session" {
@@ -26,6 +28,9 @@ declare module "express-session" {
     userRole?: string;
   }
 }
+
+const claimService = new ClaimService(storage);
+const pdfExtractionService = new PdfExtractionService();  
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
@@ -192,41 +197,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Claim routes
-  apiRouter.post("/claims", authenticateUser, async (req: Request, res: Response) => {
-    try {
-      const userId = req.session.userId!;
-      const validatedData = insertClaimSchema.parse({
-        ...req.body,
-        userId
-      });
-      
-      const newClaim = await storage.createClaim(validatedData);
-      
-      // This is a simplified implementation since we can't easily get admin users from the claims
-      // In a real application, you would have a separate query to get admin users
-      try {
-        // Manually get admin user
-        const adminUser = await storage.getUserByUsername("admin");
-        if (adminUser) {
-          await storage.createNotification({
-            userId: adminUser.id,
-            title: "New Claim Submitted",
-            message: `A new claim has been submitted by a student. Claim ID: ${newClaim.id}`
-          });
-        }
-      } catch (error) {
-        console.error("Error notifying admin:", error);
-        // Continue even if notification fails
-      }
-      
-      // Notify the user that their claim has been submitted
-      await storage.createNotification({
-        userId,
-        title: "Claim Submitted",
-        // message: `Your claim for ${validatedData.claimType} with ID: ${newClaim.id} has been submitted and is pending review.`
-        message: `A new claim has been submitted. Claim ID: ${newClaim.id}`
-      });
-      
+  apiRouter.post("/claims", authenticateUser, async (req, res) => {
+  try {
+    const userId = req.session.userId!;
+    const validatedData = insertClaimSchema.parse({
+      ...req.body,
+      userId
+    });
+
+      const newClaim = await claimService.submitClaim(validatedData, userId);
+
       return res.status(201).json(newClaim);
     } catch (error) {
       return res.status(400).json({ message: "Invalid request", error });
@@ -240,11 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Admin can see all claims, students can only see their own
       let claims;
-      if (userRole === "admin") {
-        claims = await storage.getAllClaims();
-      } else {
-        claims = await storage.getClaimsByUser(userId);
-      }
+      claims = await claimService.getAllClaim(userId, userRole)
       
       return res.status(200).json(claims);
     } catch (error) {
@@ -255,16 +231,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.get("/claims/:id", authenticateUser, async (req: Request, res: Response) => {
     try {
       const claimId = parseInt(req.params.id);
-      const claim = await storage.getClaim(claimId);
-      
-      if (!claim) {
-        return res.status(404).json({ message: "Claim not found" });
-      }
-      
-      // Students can only view their own claims
-      if (req.session.userRole !== "admin" && claim.userId !== req.session.userId) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
+      const userRole = req.session.userRole!;
+      const userId = req.session.userId!;
+      const claim = await claimService.getClaimById(claimId, userRole, userId);
       
       return res.status(200).json(claim);
     } catch (error) {
@@ -279,35 +248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = updateClaimStatusSchema.parse(req.body);
       
-      const claim = await storage.getClaim(claimId);
-      if (!claim) {
-        return res.status(404).json({ message: "Claim not found" });
-      }
-      
-      const updatedClaim = await storage.updateClaimStatus(claimId, validatedData, adminId);
-      
-      if (!updatedClaim) {
-        return res.status(500).json({ message: "Failed to update claim status" });
-      }
-      
-      // Get the student who submitted the claim
-      const student = await storage.getUser(claim.userId);
-      
-      if (student) {
-        // Notify the student about the claim status update
-        await storage.createNotification({
-          userId: student.id,
-          title: `Claim ${validatedData.status.charAt(0).toUpperCase() + validatedData.status.slice(1)}`,
-          message: `Your claim for ${claim.claimType} has been ${validatedData.status}.`
-        });
-        
-        // Send email notification
-        await sendEmail(
-          student.email,
-          `MARA Claim ${validatedData.status.charAt(0).toUpperCase() + validatedData.status.slice(1)}`,
-          `Dear ${student.fullName},\n\nYour claim for ${claim.claimType} (€${claim.amount}) has been ${validatedData.status}.${validatedData.reviewComment ? `\n\nReviewer comments: ${validatedData.reviewComment}` : ""}\n\nBest regards,\nMARA Admin Team`
-        );
-      }
+      // const updatedClaim = await claimService.updateClaimStatus(Number(req.params.id),claimId,req.body);
+      const updatedClaim = await claimService.updateClaimStatus(Number(req.params.id),claimId,validatedData);
       
       return res.status(200).json(updatedClaim);
     } catch (error) {
@@ -532,50 +474,24 @@ apiRouter.post(
   authenticateUser,
   upload.array("files", 10),
   async (req: Request, res: Response) => {
-    try {
+  try {
       const files = req.files as Express.Multer.File[] | undefined;
 
-      if (!files || files.length === 0) {
-        return res.status(400).json({ message: "No files uploaded" });
-      }
+    if (!files || files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
+    }
 
-      const extractorUrl =
-        process.env.PDF_EXTRACTOR_URL || "http://localhost:8000/extract";
-
-      const form = new FormData();
-
-      for (const file of files) {
-        form.append("files", fs.createReadStream(file.path), {
-          filename: file.originalname,
-          contentType: file.mimetype || "application/pdf",
-        });
-      }
-
-      const r = await fetch(extractorUrl, {
-        method: "POST",
-        body: form as any,
-        headers: form.getHeaders(),
-      });
-
-      const text = await r.text();
-
-      if (!r.ok) {
-        return res.status(r.status).json({
-          message: "Extractor service error",
-          status: r.status,
-          body: text,
-        });
-      }
+      const result = await pdfExtractionService.extractPDF(files);
 
       // Must be JSON here
-      return res.status(200).json(JSON.parse(text));
+      return res.status(200).json(JSON.parse(result));
     } catch (err) {
       console.error("PDF extract route error:", err);
-      return res.status(500).json({
-        message: "Failed to extract PDF data",
+    return res.status(500).json({
+      message: "Failed to extract PDF data",
         error: err instanceof Error ? err.message : String(err),
-      });
-    }
+    });
+  }
   }
 );
 
