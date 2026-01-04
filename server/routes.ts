@@ -484,7 +484,7 @@ apiRouter.post(
       const result = await pdfExtractionService.extractPDF(files);
 
       // Must be JSON here
-      return res.status(200).json(JSON.parse(result));
+      return res.status(200).json(result);
     } catch (err) {
       console.error("PDF extract route error:", err);
     return res.status(500).json({
